@@ -18,6 +18,8 @@ jobs:
       - run: dotnet workload install maui-android
       - name: Fetch pinned offline OCR models
         run: bash scripts/fetch-ocr-models.sh
+      - name: Fetch pinned PDF report font
+        run: bash scripts/fetch-report-font.sh
       - name: Validate signing secrets
         shell: bash
         env:

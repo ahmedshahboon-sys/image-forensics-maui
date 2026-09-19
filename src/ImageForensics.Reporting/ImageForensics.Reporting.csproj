@@ -4,5 +4,9 @@
     <ProjectReference Include="../ImageForensics.Core/ImageForensics.Core.csproj" />
     <PackageReference Include="SkiaSharp" Version="4.152.0" />
     <PackageReference Include="SkiaSharp.HarfBuzz" Version="4.152.0" />
+    <EmbeddedResource Include="Resources/NotoSansArabic-Regular.ttf" />
   </ItemGroup>
+  <Target Name="RequireReportFont" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('Resources/NotoSansArabic-Regular.ttf')" Text="Missing report font. Run scripts/fetch-report-font.sh before building." />
+  </Target>
 </Project>

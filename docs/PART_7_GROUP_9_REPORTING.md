@@ -59,12 +59,13 @@ The previous PDF path replaced all non-ASCII characters with question marks. Tha
 PDF text now uses:
 - SkiaSharp 4.152.0;
 - SkiaSharp.HarfBuzz 4.152.0;
-- system font fallback capable of Arabic glyphs;
+- pinned Noto Sans Arabic Regular font embedded in the Reporting assembly;
+- build-time Git blob SHA verification for that font;
 - HarfBuzz complex-script shaping;
 - RTL alignment for Arabic-containing lines;
 - shaped-width wrapping rather than fixed ASCII character slicing.
 
-The report therefore preserves Arabic text instead of intentionally discarding it.
+The report therefore preserves Arabic text instead of intentionally discarding it. The embedded font makes rendering independent of device/system font discovery.
 
 ## Export integrity
 

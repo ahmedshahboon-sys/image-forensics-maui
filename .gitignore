@@ -14,3 +14,4 @@ TestResults/
 *.snk
 .DS_Store
 src/ImageForensics.App/Resources/Raw/*.traineddata
+src/ImageForensics.Reporting/Resources/NotoSansArabic-Regular.ttf

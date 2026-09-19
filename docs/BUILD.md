@@ -9,10 +9,11 @@
 
 ## Restore and test
 
-Fetch the pinned offline Arabic/English OCR models first:
+Fetch the pinned offline Arabic/English OCR models and the pinned Unicode PDF report font first:
 
 ```bash
 bash scripts/fetch-ocr-models.sh
+bash scripts/fetch-report-font.sh
 ```
 
 Then restore/test/build:

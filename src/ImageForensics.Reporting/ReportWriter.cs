@@ -243,14 +243,8 @@ public sealed class ReportWriter
             ?? throw new InvalidOperationException(
                 "Unable to create PDF.");
 
-        var typeface =
-            SKFontManager.Default.MatchCharacter(
-                "sans-serif",
-                new[] { "ar", "en" },
-                0x0639) ??
-            SKFontManager.Default.MatchCharacter(
-                0x0639) ??
-            SKTypeface.Default;
+        using var typeface =
+            LoadPdfTypeface();
 
         using var shaper =
             new SKShaper(
@@ -420,6 +414,40 @@ public sealed class ReportWriter
             document.EndPage();
 
         document.Close();
+    }
+
+    private static SKTypeface LoadPdfTypeface()
+    {
+        var assembly =
+            typeof(ReportWriter)
+                .Assembly;
+
+        var resourceName =
+            assembly
+                .GetManifestResourceNames()
+                .SingleOrDefault(
+                    name =>
+                        name.EndsWith(
+                            "NotoSansArabic-Regular.ttf",
+                            StringComparison.Ordinal));
+
+        if (resourceName is null)
+        {
+            throw new InvalidOperationException(
+                "Embedded Arabic report font is missing.");
+        }
+
+        using var stream =
+            assembly
+                .GetManifestResourceStream(
+                    resourceName)
+            ?? throw new InvalidOperationException(
+                "Unable to open embedded Arabic report font.");
+
+        return SKTypeface.FromStream(
+                   stream)
+               ?? throw new InvalidOperationException(
+                   "Unable to load embedded Arabic report font.");
     }
 
     private static void AppendTitle(

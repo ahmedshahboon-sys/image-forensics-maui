@@ -1,0 +1,11 @@
+<Solution>
+  <Project Path="src/ImageForensics.App/ImageForensics.App.csproj" />
+  <Project Path="src/ImageForensics.Core/ImageForensics.Core.csproj" />
+  <Project Path="src/ImageForensics.Forensics/ImageForensics.Forensics.csproj" />
+  <Project Path="src/ImageForensics.Metadata/ImageForensics.Metadata.csproj" />
+  <Project Path="src/ImageForensics.Imaging/ImageForensics.Imaging.csproj" />
+  <Project Path="src/ImageForensics.Storage/ImageForensics.Storage.csproj" />
+  <Project Path="src/ImageForensics.Reporting/ImageForensics.Reporting.csproj" />
+  <Project Path="src/ImageForensics.Platform.Android/ImageForensics.Platform.Android.csproj" />
+  <Project Path="tests/ImageForensics.Tests/ImageForensics.Tests.csproj" />
+</Solution>

@@ -1,0 +1,15 @@
+bin/
+obj/
+.vs/
+.idea/
+*.user
+*.suo
+*.apk
+*.aab
+artifacts/
+TestResults/
+*.keystore
+*.jks
+*.pfx
+*.snk
+.DS_Store

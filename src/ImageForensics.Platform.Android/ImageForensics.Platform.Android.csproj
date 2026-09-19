@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <SupportedOSPlatformVersion>23.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+  <ItemGroup><ProjectReference Include="../ImageForensics.Core/ImageForensics.Core.csproj" /></ItemGroup>
+</Project>

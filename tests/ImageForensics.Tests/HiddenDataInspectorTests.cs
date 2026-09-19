@@ -142,11 +142,8 @@ public sealed class HiddenDataInspectorTests
         var bytes =
             new byte[128 * 1024];
 
-        for (var i = 0;
-             i < bytes.Length;
-             i++)
-            bytes[i] =
-                (byte)(i & 0xFF);
+        new Random(1234567)
+            .NextBytes(bytes);
 
         await File.WriteAllBytesAsync(
             path,

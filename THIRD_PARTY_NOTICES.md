@@ -20,6 +20,7 @@ This document lists direct NuGet dependencies used by the project. License names
 | Package | Version | Purpose | License |
 |---|---:|---|---|
 | Microsoft.NET.Test.Sdk | 17.14.1 | .NET test host | MIT |
+| HarfBuzzSharp.NativeAssets.Linux | 14.2.1.200 | Linux native HarfBuzz runtime for PDF reporting tests | MIT |
 | xunit | 2.9.3 | unit testing | Apache-2.0 |
 | xunit.runner.visualstudio | 3.1.1 | test runner integration | Apache-2.0 |
 

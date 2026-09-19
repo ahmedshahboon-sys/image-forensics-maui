@@ -112,6 +112,17 @@ public sealed class ReportWriter
             sb.AppendLine($"Clone/copy-move tile candidates: {h.CloneCandidatePairs}");
         }
 
+        if (report.Steganography is not null)
+        {
+            var s = report.Steganography;
+            sb.AppendLine();
+            sb.AppendLine("STEGANOGRAPHY / LSB METRICS");
+            sb.AppendLine($"Sampled pixels: {s.SampledPixels}");
+            sb.AppendLine($"LSB one-ratio R/G/B: {s.RedLsbOneRatio:F5} / {s.GreenLsbOneRatio:F5} / {s.BlueLsbOneRatio:F5}");
+            sb.AppendLine($"LSB transition rate: {s.LsbTransitionRate:F5}");
+            sb.AppendLine($"Bit-plane binary entropy 0..7: {string.Join(", ", s.BitPlaneEntropies.Select(x => x.ToString("F5")))}");
+        }
+
         foreach (var hit in report.Barcodes)
             sb.AppendLine($"Barcode/QR [{hit.Format}]: {hit.Text}");
 
@@ -130,7 +141,7 @@ public sealed class ReportWriter
             sb.AppendLine("HIDDEN-DATA INDICATORS");
 
             foreach (var finding in report.HiddenData.Take(50))
-                sb.AppendLine($"- [{finding.Confidence}] offset={finding.Offset} {finding.Kind}: {finding.Evidence}");
+                sb.AppendLine($"- [{finding.Confidence}] offset={finding.Offset} {finding.Kind}: {finding.Evidence} | Limitation: {finding.Limitation}");
         }
 
         sb.AppendLine();

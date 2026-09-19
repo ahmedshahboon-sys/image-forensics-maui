@@ -167,7 +167,7 @@ public sealed class ImageHeuristicsService : IImageHeuristicsService
                     i+=size;
                 }
             }
-            if(marker is 0xC0 or 0xC1 or 0xC2 && payload.Length>=9)
+            if((marker is 0xC0 or 0xC1 or 0xC2) && payload.Length>=9)
             {
                 var comps=payload[5];
                 if(comps>=3 && payload.Length>=6+3*comps)

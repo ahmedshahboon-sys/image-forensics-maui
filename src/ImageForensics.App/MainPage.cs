@@ -67,7 +67,7 @@ public sealed class MainPage : ContentPage
         var batch = ActionButton("فحص مجموعة + CSV");
         var clean = ActionButton("إنشاء نسخة نظيفة");
         var export = ActionButton("تصدير ومشاركة JSON / TXT / PDF");
-        var gps = ActionButton("فتح GPS في الخرائط");
+        var gps = ActionButton("فتح GPS في الخرائط");\n        var copyGps = ActionButton("نسخ إحداثيات GPS");
         var ela = ActionButton("إنشاء ELA مساعد");
         var red = ActionButton("عرض قناة R");
         var lsb = ActionButton("عرض Bit-plane LSB");
@@ -81,7 +81,7 @@ public sealed class MainPage : ContentPage
         batch.Clicked += async (_, _) => await BatchAsync(cancel);
         clean.Clicked += async (_, _) => await CleanAsync(cancel);
         export.Clicked += async (_, _) => await ExportAsync();
-        gps.Clicked += async (_, _) => await OpenGpsAsync();
+        gps.Clicked += async (_, _) => await OpenGpsAsync();\n        copyGps.Clicked += async (_, _) => await CopyGpsAsync();
         ela.Clicked += async (_, _) => await CreateVisualizationAsync("ELA");
         red.Clicked += async (_, _) => await CreateVisualizationAsync("R");
         lsb.Clicked += async (_, _) => await CreateVisualizationAsync("LSB");
@@ -103,7 +103,7 @@ public sealed class MainPage : ContentPage
                 Children =
                 {
                     title, subtitle, _preview,
-                    quick, deep, compare, batch, clean, export, gps, ela, red, lsb,
+                    quick, deep, compare, batch, clean, export, gps, copyGps, ela, red, lsb,
                     _metadataSearch, search,
                     cancel, theme,
                     _progress, _status, _result
@@ -428,7 +428,7 @@ public sealed class MainPage : ContentPage
         }
     }
 
-    private async Task CreateVisualizationAsync(string kind)
+    private async Task CopyGpsAsync()\n    {\n        var gps = _last?.Metadata?.Gps;\n        if (gps is null)\n        {\n            _status.Text = "لا توجد GPS صريحة في Metadata";\n            return;\n        }\n\n        var coordinates = $"{gps.Latitude:F8}, {gps.Longitude:F8}";\n        await Clipboard.Default.SetTextAsync(coordinates);\n        _status.Text = "تم نسخ إحداثيات GPS";\n    }\n\n    private async Task CreateVisualizationAsync(string kind)
     {
         if (_lastSource is null || !File.Exists(_lastSource))
         {

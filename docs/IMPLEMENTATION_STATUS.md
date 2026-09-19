@@ -1,64 +1,38 @@
 # Implementation status
 
 ## Group 0 — Foundation
-Implemented baseline:
-- Modular solution structure.
-- MAUI dependency composition.
-- Privacy-safe logging abstraction and local JSON-line logger.
-- Central file-size limits.
-- Cancellation and progress contracts.
-- Android-first app shell.
-- GitHub Actions CI for tests and APK publish.
-- Private cache copy for Android content URIs with size cap and cleanup.
+Baseline implemented: modular solution, DI, local privacy-safe logging, configurable limits, cancellation/progress, Android MAUI shell, GitHub Actions CI and private-cache handling.
 
 ## Group 1 — File identity & technical inspection
-Implemented baseline:
-- filename/size/extension/MIME.
-- magic-byte detection and extension/content mismatch.
-- SHA-256, SHA-1, MD5 and CRC32 primitive.
-- full-file entropy.
-- dimensions/aspect ratio/encoded format/color type/alpha/frames/orientation via SkiaSharp.
-- aHash/dHash/pHash and Hamming-similarity helper.
-- safe streaming reads.
-
-Remaining refinements: DPI/PPI, palette reporting, broader RAW/HEIF validation and stronger comparison UI.
+Implemented: MIME/signature mismatch, SHA-256/SHA-1/MD5/CRC32 primitive, entropy, dimensions/aspect/encoding/color/alpha/frames/orientation, aHash/dHash/pHash and similarity.
+Remaining refinements: DPI/PPI, palette, broader RAW/HEIF validation.
 
 ## Group 2 — Metadata
-Implemented baseline:
-- MetadataExtractor 2.9.3.
-- EXIF/IPTC/XMP/ICC/etc. directory/tag enumeration.
-- raw + parsed values, source, meaning, confidence.
-- explicit GPS decimal coordinates only when GPS metadata exists.
-- parser error collection.
+Implemented: MetadataExtractor-based generic EXIF/IPTC/XMP/ICC/etc. enumeration, raw/parsed/source/confidence fields, explicit GPS extraction and parser errors.
 
 ## Group 3 — Container structure
-Implemented baseline:
-- safe JPEG marker parser and PNG chunk parser.
-- APP/DQT/DHT/SOF/SOS/COM/EOI reporting.
-- IHDR/IDAT/IEND/text/eXIf/iCCP reporting.
-- trailing-byte detection and oversized/truncated guards.
+Implemented baseline JPEG marker and PNG chunk parsers with offsets, lengths, end-marker/trailing-data detection and size/truncation guards.
 
 ## Group 4 — Consistency checks
-Initial rules implemented:
-- extension versus magic signature mismatch.
-- trailing data after container end.
-- Software metadata indicator with explicit non-conclusive limitation.
-- metadata pixel dimensions versus decoded dimensions.
-- EXIF timestamp-order anomaly.
-Every rule returns Evidence + Confidence + Limitation and never declares an image genuine/fake.
+Implemented initial Evidence + Confidence + Limitation rules for extension/signature mismatch, trailing data, Software field, metadata dimension mismatch and timestamp ordering. No genuine/fake verdict is produced.
 
-## Group 5 — Hidden data heuristics
-Initial read-only scanner implemented:
-- ZIP, 7z, RAR, PDF, PE/MZ and GZip magic-byte discovery with offsets.
-- results are Possible indicators only.
-- no extraction and no execution.
-- bounded result count and streaming scan.
+## Group 5 — Hidden data
+Implemented read-only streaming magic-signature heuristics for archives/documents/executables. No extraction and no execution.
 
 ## Group 6 — QR/Barcode
-Initial offline decoder implemented using ZXing + SkiaSharp.
+Initial offline decoder implemented via ZXing + SkiaSharp.
+
+## Group 7 — Privacy & metadata cleaner
+Implemented privacy-risk classification for GPS, device model, serial, owner/copyright, timestamps, software, XMP/IPTC, thumbnails and trailing data.
+Metadata cleaner now creates a NEW pixel-reencoded JPEG/PNG, applies EXIF orientation to pixels, does not overwrite the source, re-reads metadata, re-hashes the original and reports whether GPS was removed.
+Animated/multi-frame input is explicitly refused rather than silently flattened.
+
+## Group 8 — Comparison lab
+Implemented comparison service for exact SHA-256, dimensions, aHash/dHash/pHash similarity and metadata field differences.
+Visual overlay/difference heatmap and batch UI remain.
 
 ## Group 9 — Reporting
-Initial JSON/TXT report model and writer implemented.
+Initial JSON/TXT report model/writer exists.
 
 Next execution target:
-Privacy cleaner, comparison/batch, deeper image heuristics, UI/report export, security/test/performance/release completion.
+Deeper image heuristics, difference maps/batch, report export/share, full result UI, Android sharing/GPS intents, security hardening, expanded tests/performance and release validation.

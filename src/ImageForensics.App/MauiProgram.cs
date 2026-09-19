@@ -1,8 +1,10 @@
 using ImageForensics.Core.Abstractions;
 using ImageForensics.Core.Models;
+using ImageForensics.Forensics.Comparison;
 using ImageForensics.Forensics.Containers;
 using ImageForensics.Forensics.FileIdentity;
 using ImageForensics.Forensics.HiddenData;
+using ImageForensics.Forensics.Privacy;
 using ImageForensics.Forensics.Rules;
 using ImageForensics.Imaging;
 using ImageForensics.Metadata;
@@ -26,6 +28,9 @@ public static class MauiProgram
         builder.Services.AddSingleton<IBarcodeInspector, BarcodeInspector>();
         builder.Services.AddSingleton<IConsistencyRuleEngine, ConsistencyRuleEngine>();
         builder.Services.AddSingleton<IHiddenDataInspector, HiddenDataInspector>();
+        builder.Services.AddSingleton<IPrivacyRiskAnalyzer, PrivacyRiskAnalyzer>();
+        builder.Services.AddSingleton<IMetadataCleaner, MetadataCleaner>();
+        builder.Services.AddSingleton<IImageComparisonService, ImageComparisonService>();
         builder.Services.AddSingleton<MainPage>();
 
 #if DEBUG

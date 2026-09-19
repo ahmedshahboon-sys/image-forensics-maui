@@ -147,6 +147,7 @@ public sealed class ImageHeuristicsService : IImageHeuristicsService
         if(fs.ReadByte()!=0xFF || fs.ReadByte()!=0xD8) return (null,null);
         var quant=new List<byte>();
         string? subsampling=null;
+        var lenBytes = new byte[2];
 
         while(fs.Position<fs.Length)
         {

@@ -448,6 +448,19 @@ public sealed class MainPage : ContentPage
         _status.Text = "تم نسخ إحداثيات GPS";
     }
 
+    private async Task CopyOcrAsync()
+    {
+        var text = _last?.Ocr?.Text;
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            _status.Text = "لا يوجد نص OCR في نتيجة الفحص الحالي";
+            return;
+        }
+
+        await Clipboard.Default.SetTextAsync(text);
+        _status.Text = "تم نسخ نص OCR";
+    }
+
     private async Task CreateVisualizationAsync(string kind)
     {
         if (_lastSource is null || !File.Exists(_lastSource))

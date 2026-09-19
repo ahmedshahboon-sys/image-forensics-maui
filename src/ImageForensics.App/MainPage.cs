@@ -428,7 +428,21 @@ public sealed class MainPage : ContentPage
         }
     }
 
-    private async Task CopyGpsAsync()\n    {\n        var gps = _last?.Metadata?.Gps;\n        if (gps is null)\n        {\n            _status.Text = "لا توجد GPS صريحة في Metadata";\n            return;\n        }\n\n        var coordinates = $"{gps.Latitude:F8}, {gps.Longitude:F8}";\n        await Clipboard.Default.SetTextAsync(coordinates);\n        _status.Text = "تم نسخ إحداثيات GPS";\n    }\n\n    private async Task CreateVisualizationAsync(string kind)
+    private async Task CopyGpsAsync()
+    {
+        var gps = _last?.Metadata?.Gps;
+        if (gps is null)
+        {
+            _status.Text = "لا توجد GPS صريحة في Metadata";
+            return;
+        }
+
+        var coordinates = $"{gps.Latitude:F8}, {gps.Longitude:F8}";
+        await Clipboard.Default.SetTextAsync(coordinates);
+        _status.Text = "تم نسخ إحداثيات GPS";
+    }
+
+    private async Task CreateVisualizationAsync(string kind)
     {
         if (_lastSource is null || !File.Exists(_lastSource))
         {

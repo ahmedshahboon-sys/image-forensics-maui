@@ -25,6 +25,8 @@ jobs:
           dotnet-version: '10.0.x'
       - name: Install MAUI Android workload
         run: dotnet workload install maui-android
+      - name: Fetch pinned offline OCR models
+        run: bash scripts/fetch-ocr-models.sh
       - name: Tests
         run: |
           dotnet restore tests/ImageForensics.Tests/ImageForensics.Tests.csproj

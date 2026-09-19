@@ -123,6 +123,29 @@ public sealed class ReportWriter
             sb.AppendLine($"Bit-plane binary entropy 0..7: {string.Join(", ", s.BitPlaneEntropies.Select(x => x.ToString("F5")))}");
         }
 
+        if (report.Ocr is not null)
+        {
+            sb.AppendLine();
+            sb.AppendLine("OFFLINE OCR");
+            sb.AppendLine($"Languages: {report.Ocr.Languages}");
+            sb.AppendLine($"Succeeded: {report.Ocr.Succeeded}");
+            sb.AppendLine($"Confidence: {report.Ocr.Confidence:F2}");
+            if (!string.IsNullOrWhiteSpace(report.Ocr.Error)) sb.AppendLine($"OCR error: {report.Ocr.Error}");
+            if (!string.IsNullOrWhiteSpace(report.Ocr.Text))
+            {
+                sb.AppendLine("Recognized text:");
+                sb.AppendLine(report.Ocr.Text);
+            }
+        }
+
+        if (report.VisibleTextEntities is { Count: > 0 })
+        {
+            sb.AppendLine();
+            sb.AppendLine("VISIBLE TEXT ENTITIES");
+            foreach (var entity in report.VisibleTextEntities)
+                sb.AppendLine($"- {entity.Kind} [{entity.Source}]: {entity.Value}");
+        }
+
         foreach (var hit in report.Barcodes)
             sb.AppendLine($"Barcode/QR [{hit.Format}]: {hit.Text}");
 

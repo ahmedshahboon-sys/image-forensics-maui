@@ -9,6 +9,14 @@
 
 ## Restore and test
 
+Fetch the pinned offline Arabic/English OCR models first:
+
+```bash
+bash scripts/fetch-ocr-models.sh
+```
+
+Then restore/test/build:
+
 ```bash
 dotnet workload install maui-android
 dotnet restore tests/ImageForensics.Tests/ImageForensics.Tests.csproj

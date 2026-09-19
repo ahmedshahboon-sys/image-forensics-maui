@@ -17,6 +17,8 @@ public sealed class ScanCoordinator
     private readonly IPrivacyRiskAnalyzer _privacy;
     private readonly IImageHeuristicsService _heuristics;
     private readonly ISteganographyAnalyzer _steganography;
+    private readonly IOcrInspector _ocr;
+    private readonly IVisibleTextEntityExtractor _visibleText;
 
     public ScanCoordinator(
         IFileIdentityInspector identity,
@@ -29,7 +31,9 @@ public sealed class ScanCoordinator
         IHiddenDataInspector hidden,
         IPrivacyRiskAnalyzer privacy,
         IImageHeuristicsService heuristics,
-        ISteganographyAnalyzer steganography)
+        ISteganographyAnalyzer steganography,
+        IOcrInspector ocr,
+        IVisibleTextEntityExtractor visibleText)
     {
         _identity = identity;
         _technical = technical;
@@ -42,6 +46,8 @@ public sealed class ScanCoordinator
         _privacy = privacy;
         _heuristics = heuristics;
         _steganography = steganography;
+        _ocr = ocr;
+        _visibleText = visibleText;
     }
 
     public async Task<ScanReport> QuickScanAsync(
@@ -168,8 +174,17 @@ public sealed class ScanCoordinator
 
         progress?.Report(
             new(
+                "ocr",
+                0.63,
+                "Offline Arabic/English OCR"));
+
+        var ocr = await _ocr.InspectAsync(path, ct);
+        var visibleTextEntities = _visibleText.Extract(ocr.Text, barcodes);
+
+        progress?.Report(
+            new(
                 "rules",
-                0.65,
+                0.68,
                 "Consistency checks"));
 
         var indicators =
@@ -282,6 +297,8 @@ public sealed class ScanCoordinator
             hidden,
             privacy,
             heuristics,
-            steganography);
+            steganography,
+            ocr,
+            visibleTextEntities);
     }
 }

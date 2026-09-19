@@ -15,7 +15,9 @@ public sealed record ScanReport(
     IReadOnlyList<HiddenDataFinding>? HiddenData = null,
     PrivacyRiskReport? Privacy = null,
     ImageHeuristicsResult? ImageHeuristics = null,
-    SteganographyResult? Steganography = null);
+    SteganographyResult? Steganography = null,
+    OcrInspectionResult? Ocr = null,
+    IReadOnlyList<VisibleTextEntity>? VisibleTextEntities = null);
 
 public sealed record BatchReportRow(
     string FileName,

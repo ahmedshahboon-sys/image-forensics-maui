@@ -73,6 +73,7 @@ public sealed class MainPage : ContentPage
         var red = ActionButton("عرض قناة R");
         var lsb = ActionButton("عرض Bit-plane LSB");
         var entropyMap = ActionButton("خريطة Entropy");
+        var copyOcr = ActionButton("نسخ نص OCR");
         var search = ActionButton("بحث Metadata");
         var theme = ActionButton("تبديل Light / Dark");
         var cancel = new Button { Text = "إلغاء العملية", IsEnabled = false };
@@ -89,6 +90,7 @@ public sealed class MainPage : ContentPage
         red.Clicked += async (_, _) => await CreateVisualizationAsync("R");
         lsb.Clicked += async (_, _) => await CreateVisualizationAsync("LSB");
         entropyMap.Clicked += async (_, _) => await CreateVisualizationAsync("ENTROPY");
+        copyOcr.Clicked += async (_, _) => await CopyOcrAsync();
         search.Clicked += (_, _) => SearchMetadata();
         cancel.Clicked += (_, _) => _cts?.Cancel();
         theme.Clicked += (_, _) =>
@@ -107,7 +109,7 @@ public sealed class MainPage : ContentPage
                 Children =
                 {
                     title, subtitle, _preview,
-                    quick, deep, compare, batch, clean, export, gps, copyGps, ela, red, lsb, entropyMap,
+                    quick, deep, compare, batch, clean, export, gps, copyGps, ela, red, lsb, entropyMap, copyOcr,
                     _metadataSearch, search,
                     cancel, theme,
                     _progress, _status, _result

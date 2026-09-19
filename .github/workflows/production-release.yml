@@ -16,6 +16,8 @@ jobs:
         with:
           dotnet-version: '10.0.x'
       - run: dotnet workload install maui-android
+      - name: Fetch pinned offline OCR models
+        run: bash scripts/fetch-ocr-models.sh
       - name: Validate signing secrets
         shell: bash
         env:

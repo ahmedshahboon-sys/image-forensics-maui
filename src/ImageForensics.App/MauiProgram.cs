@@ -6,10 +6,12 @@ using ImageForensics.Forensics.FileIdentity;
 using ImageForensics.Forensics.HiddenData;
 using ImageForensics.Forensics.Privacy;
 using ImageForensics.Forensics.Rules;
+using ImageForensics.Forensics.VisibleContent;
 using ImageForensics.Imaging;
 using ImageForensics.Metadata;
 using ImageForensics.Reporting;
 using Microsoft.Extensions.Logging;
+using TesseractOcrMaui;
 
 namespace ImageForensics.App;
 
@@ -21,6 +23,12 @@ public static class MauiProgram
             MauiApp.CreateBuilder();
 
         builder.UseMauiApp<App>();
+        builder.Services.AddLogging();
+        builder.Services.AddTesseractOcr(files =>
+        {
+            files.AddFile("ara.traineddata");
+            files.AddFile("eng.traineddata");
+        });
 
         builder.Services.AddSingleton(
             new AnalysisLimits());

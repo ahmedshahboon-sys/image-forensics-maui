@@ -13,3 +13,4 @@ TestResults/
 *.pfx
 *.snk
 .DS_Store
+src/ImageForensics.App/Resources/Raw/*.traineddata

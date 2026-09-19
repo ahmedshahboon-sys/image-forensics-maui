@@ -188,7 +188,7 @@ public sealed class ConsistencyRuleEngine : IConsistencyRuleEngine
                 $"Modified={modified:O}; Original={original:O}.",
                 ForensicConfidence.Possible,
                 "Metadata modification timestamp parses earlier than the recorded original timestamp.",
-                "الحقول قد تُكتب بمناطق زمنية أو ساعات جهاز مختلفة، وقد تُنسخ من ملف آخر؛ المؤشر احتمالي."));
+                "الحقول قد تُكتب بمناطق زمنية أو ساعات جهاز مختلفة، وقد تُنسخ من ملف آخر؛ هذا المؤشر لا يعتبر دليل تزوير."));
         }
 
         AddConflictingTimestampText(
@@ -285,6 +285,7 @@ public sealed class ConsistencyRuleEngine : IConsistencyRuleEngine
             .Where(f => f.Tag.Equals(tag, StringComparison.OrdinalIgnoreCase))
             .Select(ValueOf)
             .Where(v => !string.IsNullOrWhiteSpace(v))
+            .Select(v => v!)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 

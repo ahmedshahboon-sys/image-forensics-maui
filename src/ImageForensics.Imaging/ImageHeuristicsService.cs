@@ -153,7 +153,7 @@ public sealed class ImageHeuristicsService : IImageHeuristicsService
             var p=fs.ReadByte(); if(p<0)break; if(p!=0xFF)continue;
             int marker; do{marker=fs.ReadByte();}while(marker==0xFF); if(marker<0||marker==0xD9||marker==0xDA)break;
             if(marker is >=0xD0 and <=0xD7 || marker==0x01)continue;
-            Span<byte> lenBytes=stackalloc byte[2]; if(fs.Read(lenBytes)!=2)break;
+            if(fs.Read(lenBytes,0,lenBytes.Length)!=2)break;
             var len=BinaryPrimitives.ReadUInt16BigEndian(lenBytes); if(len<2)break;
             var payload=new byte[len-2]; if(fs.Read(payload,0,payload.Length)!=payload.Length)break;
             if(marker==0xDB)

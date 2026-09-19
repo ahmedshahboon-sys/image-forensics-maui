@@ -47,6 +47,18 @@ jobs:
           -p:AndroidSigningKeyPass=beta-ci-2026
           -p:AndroidSigningStorePass=beta-ci-2026
           -o artifacts/android
+      - name: Verify signed APK
+        shell: bash
+        run: |
+          APK="$(find artifacts/android -type f -name '*-Signed.apk' | head -n 1)"
+          test -n "$APK" && test -f "$APK"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          ZIPALIGN="$(find "$ANDROID_HOME/build-tools" -type f -name zipalign | sort -V | tail -n 1)"
+          test -x "$APKSIGNER" && test -x "$ZIPALIGN"
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
+          "$ZIPALIGN" -c -v 4 "$APK"
+          unzip -t "$APK"
+
       - name: SHA-256
         shell: bash
         run: |

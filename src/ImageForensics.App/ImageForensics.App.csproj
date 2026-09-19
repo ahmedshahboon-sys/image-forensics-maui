@@ -12,13 +12,16 @@
     <SupportedOSPlatformVersion>23.0</SupportedOSPlatformVersion>
     <AndroidUseAapt2>true</AndroidUseAapt2>
   </PropertyGroup>
+
   <ItemGroup>
     <MauiIcon Include="Resources/AppIcon/appicon.svg" ForegroundFile="Resources/AppIcon/appiconfg.svg" Color="#111827" />
     <MauiSplashScreen Include="Resources/Splash/splash.svg" Color="#111827" BaseSize="128,128" />
     <MauiAsset Include="Resources/Raw/**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+
     <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.20" />
     <PackageReference Include="SkiaSharp" Version="4.152.0" />
     <PackageReference Include="TesseractOcrMaui" Version="1.5.2" />
+
     <ProjectReference Include="../ImageForensics.Core/ImageForensics.Core.csproj" />
     <ProjectReference Include="../ImageForensics.Forensics/ImageForensics.Forensics.csproj" />
     <ProjectReference Include="../ImageForensics.Metadata/ImageForensics.Metadata.csproj" />
@@ -27,8 +30,9 @@
     <ProjectReference Include="../ImageForensics.Reporting/ImageForensics.Reporting.csproj" />
     <ProjectReference Include="../ImageForensics.Platform.Android/ImageForensics.Platform.Android.csproj" />
   </ItemGroup>
+
   <Target Name="RequireOcrModels" BeforeTargets="PrepareForBuild">
-    <Error Condition="!Exists(\'Resources/Raw/ara.traineddata\')" Text="Missing ara.traineddata. Run scripts/fetch-ocr-models.sh before building the Android app." />
-    <Error Condition="!Exists(\'Resources/Raw/eng.traineddata\')" Text="Missing eng.traineddata. Run scripts/fetch-ocr-models.sh before building the Android app." />
+    <Error Condition="!Exists('Resources/Raw/ara.traineddata')" Text="Missing ara.traineddata. Run scripts/fetch-ocr-models.sh before building the Android app." />
+    <Error Condition="!Exists('Resources/Raw/eng.traineddata')" Text="Missing eng.traineddata. Run scripts/fetch-ocr-models.sh before building the Android app." />
   </Target>
 </Project>

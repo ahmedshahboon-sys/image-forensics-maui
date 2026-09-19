@@ -124,7 +124,7 @@ public sealed class ImageTechnicalInspector : IImageTechnicalInspector
                 continue;
             }
 
-            if (marker is 0xC0 or 0xC1 or 0xC2 && payloadLen >= 1)
+            if ((marker is 0xC0 or 0xC1 or 0xC2) && payloadLen >= 1)
             {
                 var precision = fs.ReadByte();
                 if (precision >= 0) bitDepth = precision;

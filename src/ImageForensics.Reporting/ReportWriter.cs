@@ -88,7 +88,7 @@ public sealed class ReportWriter
             var line=ToPdfSafe(raw);
             foreach(var piece in Wrap(line,92))
             {
-                canvas.DrawText(piece,margin,y,paint);
+                canvas.DrawText(piece,margin,y,font,paint);
                 y+=lineH;
                 if(y>pageH-margin) break;
             }

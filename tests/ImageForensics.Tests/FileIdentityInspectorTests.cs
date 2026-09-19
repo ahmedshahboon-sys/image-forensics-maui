@@ -1,4 +1,5 @@
 using ImageForensics.Forensics.FileIdentity;
+using Xunit;
 
 namespace ImageForensics.Tests;
 

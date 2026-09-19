@@ -16,5 +16,6 @@ public sealed record FileIdentityResult
     public required string Sha256 { get; init; }
     public required string Sha1 { get; init; }
     public required string Md5 { get; init; }
+    public string Crc32 { get; init; } = string.Empty;
     public required string SignatureHex { get; init; }
 }

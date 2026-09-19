@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using ImageForensics.Core.Abstractions;
 using ImageForensics.Core.Models;
+using ImageForensics.Forensics.Hashing;
 
 namespace ImageForensics.Forensics.FileIdentity;
 
@@ -51,6 +52,7 @@ public sealed class SafeFileIdentityInspector : IFileIdentityInspector
 
         var frequencies = new long[256];
         var buffer = new byte[_limits.BufferBytes];
+        var crcState = Crc32.InitialState;
         long processed = 0;
 
         while (true)
@@ -63,6 +65,8 @@ public sealed class SafeFileIdentityInspector : IFileIdentityInspector
             sha256.AppendData(span);
             sha1.AppendData(span);
             md5.AppendData(span);
+            crcState = Crc32.Update(crcState, span);
+
             for (var i = 0; i < read; i++)
                 frequencies[buffer[i]]++;
 
@@ -94,6 +98,7 @@ public sealed class SafeFileIdentityInspector : IFileIdentityInspector
             Sha256 = Convert.ToHexString(sha256.GetHashAndReset()).ToLowerInvariant(),
             Sha1 = Convert.ToHexString(sha1.GetHashAndReset()).ToLowerInvariant(),
             Md5 = Convert.ToHexString(md5.GetHashAndReset()).ToLowerInvariant(),
+            Crc32 = Crc32.FinalizeHash(crcState).ToString("x8"),
             SignatureHex = Convert.ToHexString(signature).ToLowerInvariant()
         };
     }
@@ -123,6 +128,7 @@ public sealed class SafeFileIdentityInspector : IFileIdentityInspector
         ".bmp" => "image/bmp",
         ".tif" or ".tiff" => "image/tiff",
         ".heic" or ".heif" => "image/heif",
+        ".avif" => "image/avif",
         _ => "application/octet-stream"
     };
 
@@ -130,20 +136,35 @@ public sealed class SafeFileIdentityInspector : IFileIdentityInspector
     {
         if (b.Length >= 3 && b[0] == 0xFF && b[1] == 0xD8 && b[2] == 0xFF)
             return ("JPEG", "image/jpeg", new(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg" });
+
         if (b.Length >= 8 && b[..8].SequenceEqual(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }))
             return ("PNG", "image/png", new(StringComparer.OrdinalIgnoreCase) { ".png" });
+
         if (b.Length >= 6 && (b[..6].SequenceEqual("GIF87a"u8) || b[..6].SequenceEqual("GIF89a"u8)))
             return ("GIF", "image/gif", new(StringComparer.OrdinalIgnoreCase) { ".gif" });
+
         if (b.Length >= 12 && b[..4].SequenceEqual("RIFF"u8) && b.Slice(8, 4).SequenceEqual("WEBP"u8))
             return ("WebP", "image/webp", new(StringComparer.OrdinalIgnoreCase) { ".webp" });
+
         if (b.Length >= 2 && b[..2].SequenceEqual("BM"u8))
             return ("BMP", "image/bmp", new(StringComparer.OrdinalIgnoreCase) { ".bmp" });
+
         if (b.Length >= 4 &&
             (b[..4].SequenceEqual(new byte[] { 0x49, 0x49, 0x2A, 0x00 }) ||
              b[..4].SequenceEqual(new byte[] { 0x4D, 0x4D, 0x00, 0x2A })))
-            return ("TIFF", "image/tiff", new(StringComparer.OrdinalIgnoreCase) { ".tif", ".tiff" });
+            return ("TIFF", "image/tiff", new(StringComparer.OrdinalIgnoreCase) { ".tif", ".tiff", ".dng" });
+
         if (b.Length >= 12 && b.Slice(4, 4).SequenceEqual("ftyp"u8))
-            return ("ISO-BMFF/HEIF-family", "image/heif", new(StringComparer.OrdinalIgnoreCase) { ".heic", ".heif" });
+        {
+            var brand = System.Text.Encoding.ASCII.GetString(b.Slice(8, 4));
+            if (brand is "avif" or "avis")
+                return ("AVIF", "image/avif", new(StringComparer.OrdinalIgnoreCase) { ".avif" });
+
+            if (brand is "heic" or "heix" or "hevc" or "hevx" or "heim" or "heis" or "hevm" or "hevs" or "mif1" or "msf1")
+                return ("HEIF/HEIC", "image/heif", new(StringComparer.OrdinalIgnoreCase) { ".heic", ".heif", ".hif" });
+
+            return ("ISO-BMFF", "application/octet-stream", new(StringComparer.OrdinalIgnoreCase));
+        }
 
         return ("Unknown", "application/octet-stream", new(StringComparer.OrdinalIgnoreCase));
     }

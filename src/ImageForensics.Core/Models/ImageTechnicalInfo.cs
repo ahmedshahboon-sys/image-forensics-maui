@@ -12,4 +12,12 @@ public sealed record ImageTechnicalInfo
     public required int BitsPerPixel { get; init; }
     public required int FrameCount { get; init; }
     public required string Orientation { get; init; }
+
+    public int? EncodedBitDepth { get; init; }
+    public double? HorizontalDpi { get; init; }
+    public double? VerticalDpi { get; init; }
+    public int? PaletteEntries { get; init; }
+    public string? PaletteInfo { get; init; }
+    public string? ColorSpace { get; init; }
+    public string Compression { get; init; } = "Unknown";
 }

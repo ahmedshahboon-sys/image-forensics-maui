@@ -9,7 +9,13 @@ public sealed record MetadataField(
     ForensicConfidence Confidence,
     string Source);
 
-public sealed record GpsInfo(double Latitude, double Longitude);
+public sealed record GpsInfo(
+    double Latitude,
+    double Longitude,
+    double? Altitude = null,
+    double? Speed = null,
+    double? Direction = null,
+    string? Timestamp = null);
 
 public sealed record MetadataInspectionResult(
     IReadOnlyList<MetadataField> Fields,

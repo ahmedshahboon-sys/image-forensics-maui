@@ -774,14 +774,60 @@ public sealed class MainPage : ContentPage
             var txt = Path.Combine(dir, $"report-{stamp}.txt");
             var pdf = Path.Combine(dir, $"report-{stamp}.pdf");
 
-            await File.WriteAllTextAsync(json, _writer.ToJson(_last));
-            await File.WriteAllTextAsync(txt, _writer.ToText(_last));
-            _writer.WritePdf(_last, pdf);
+            await File.WriteAllTextAsync(
+                json,
+                _writer.ToJson(_last));
 
-            await Share.Default.RequestAsync(new ShareMultipleFilesRequest(
-                "Image Forensics report",
-                new List<ShareFile> { new(json), new(txt), new(pdf) }));
-            _status.Text = "تم تصدير JSON / TXT / PDF";
+            await File.WriteAllTextAsync(
+                txt,
+                _writer.ToText(_last));
+
+            _writer.WritePdf(
+                _last,
+                pdf);
+
+            var manifest =
+                Path.Combine(
+                    dir,
+                    $"report-{stamp}.sha256.txt");
+
+            static async Task<string> Sha256FileAsync(
+                string path)
+            {
+                await using var stream =
+                    File.OpenRead(path);
+
+                var hash =
+                    await System.Security.Cryptography.SHA256.HashDataAsync(
+                        stream);
+
+                return Convert
+                    .ToHexString(hash)
+                    .ToLowerInvariant();
+            }
+
+            var manifestText =
+                $"{await Sha256FileAsync(json)}  {Path.GetFileName(json)}\n" +
+                $"{await Sha256FileAsync(txt)}  {Path.GetFileName(txt)}\n" +
+                $"{await Sha256FileAsync(pdf)}  {Path.GetFileName(pdf)}\n";
+
+            await File.WriteAllTextAsync(
+                manifest,
+                manifestText);
+
+            await Share.Default.RequestAsync(
+                new ShareMultipleFilesRequest(
+                    "Image Forensics report",
+                    new List<ShareFile>
+                    {
+                        new(json),
+                        new(txt),
+                        new(pdf),
+                        new(manifest)
+                    }));
+
+            _status.Text =
+                "تم تصدير JSON / TXT / PDF + SHA256 manifest";
         }
         catch (Exception ex)
         {

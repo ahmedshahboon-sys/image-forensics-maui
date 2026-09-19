@@ -9,6 +9,7 @@ This document lists direct NuGet dependencies used by the project. License names
 | Microsoft.Maui.Controls | 10.0.20 | Android UI / .NET MAUI | MIT |
 | MetadataExtractor | 2.9.3 | EXIF/IPTC/XMP/ICC and metadata parsing | Apache-2.0 |
 | SkiaSharp | 4.152.0 | image decoding, pixel analysis, visualizations, PDF drawing | MIT |
+| SkiaSharp.HarfBuzz | 4.152.0 | complex-script text shaping for Unicode/Arabic PDF reports | MIT |
 | ZXing.Net.Bindings.SkiaSharp | 0.16.24 | QR/barcode decoding over SkiaSharp | Apache-2.0 |
 | TesseractOcrMaui | 1.5.2 | .NET MAUI wrapper around native Tesseract OCR | Apache-2.0 |
 | Tesseract tessdata_fast (ara, eng) | pinned repository commit | Offline Arabic/English OCR language data | Apache-2.0 |

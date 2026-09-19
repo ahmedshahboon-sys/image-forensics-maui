@@ -3,5 +3,6 @@
   <ItemGroup>
     <ProjectReference Include="../ImageForensics.Core/ImageForensics.Core.csproj" />
     <PackageReference Include="SkiaSharp" Version="4.152.0" />
+    <PackageReference Include="SkiaSharp.HarfBuzz" Version="4.152.0" />
   </ItemGroup>
 </Project>

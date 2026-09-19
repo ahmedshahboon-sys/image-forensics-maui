@@ -24,8 +24,8 @@
 - QR / Barcode Offline.
 - Hidden-data signatures وprintable strings بدون تنفيذ أو فك payload.
 - ELA مساعد، RGB channels، bit planes، block/noise/copy-move heuristics.
-- Batch حتى 50 ملفًا وتصدير CSV.
-- تقارير JSON / TXT / PDF.
+- Batch حتى 50 ملفًا وتصدير CSV/JSON مع اكتشاف النسخ المطابقة والمتشابهة احتماليًا.
+- تقارير JSON / TXT / PDF منظمة إلى أقسام جنائية واضحة، مع PDF Unicode يدعم تشكيل العربية.
 - Share-to-App وShare-out على Android.
 - فتح GPS الصريح في تطبيق الخرائط.
 - RTL عربي، Light/Dark، Progress وCancel.

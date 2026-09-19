@@ -195,7 +195,8 @@ public sealed class ImagePairPixelAnalyzer : IImagePairPixelAnalyzer
                 0,
                 0,
                 width,
-                height));
+                height),
+            SKSamplingOptions.Default);
 
         return subset;
     }

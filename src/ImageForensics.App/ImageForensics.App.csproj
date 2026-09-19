@@ -13,6 +13,8 @@
     <AndroidUseAapt2>true</AndroidUseAapt2>
   </PropertyGroup>
   <ItemGroup>
+    <MauiIcon Include="Resources/AppIcon/appicon.svg" ForegroundFile="Resources/AppIcon/appiconfg.svg" Color="#111827" />
+    <MauiSplashScreen Include="Resources/Splash/splash.svg" Color="#111827" BaseSize="128,128" />
     <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.20" />
     <ProjectReference Include="../ImageForensics.Core/ImageForensics.Core.csproj" />
     <ProjectReference Include="../ImageForensics.Forensics/ImageForensics.Forensics.csproj" />

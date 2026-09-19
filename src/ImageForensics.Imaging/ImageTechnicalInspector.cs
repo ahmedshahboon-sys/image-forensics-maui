@@ -150,9 +150,9 @@ public sealed class ImageTechnicalInspector : IImageTechnicalInspector
             ct.ThrowIfCancellationRequested();
             Span<byte> header = stackalloc byte[8];
             if (fs.Read(header) != 8) break;
-            var len = BinaryPrimitives.ReadUInt32BigEndian(header[..4]);
+            var len = BinaryPrimitives.ReadUInt32BigEndian(header.AsSpan(0, 4));
             if (len > int.MaxValue || fs.Position + len + 4 > fs.Length) break;
-            var type = System.Text.Encoding.ASCII.GetString(header[4..8]);
+            var type = System.Text.Encoding.ASCII.GetString(header, 4, 4);
 
             if (type == "IHDR" && len >= 13)
             {

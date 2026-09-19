@@ -354,17 +354,50 @@ public sealed class MainPage : ContentPage
             var dir = Path.Combine(FileSystem.AppDataDirectory, "cleaned");
             var r = await _cleaner.CreateCleanCopyAsync(temp, dir, _cts.Token);
 
+            var beforeRisks =
+                r.PrivacyRiskCodesBefore.Count == 0
+                    ? "none"
+                    : string.Join(", ", r.PrivacyRiskCodesBefore);
+
+            var afterRisks =
+                r.PrivacyRiskCodesAfter.Count == 0
+                    ? "none"
+                    : string.Join(", ", r.PrivacyRiskCodesAfter);
+
+            var verificationNotes =
+                r.VerificationNotes.Count == 0
+                    ? "none"
+                    : string.Join(" | ", r.VerificationNotes);
+
             _result.Text =
                 $"النسخة النظيفة: {r.OutputPath}\n" +
                 $"Format: {r.OutputFormat}\n" +
                 $"Metadata before/after: {r.MetadataFieldsBefore}/{r.MetadataFieldsAfter}\n" +
+                $"Privacy risks before/after: {r.PrivacyRisksBefore}/{r.PrivacyRisksAfter}\n" +
+                $"Risk codes before: {beforeRisks}\n" +
+                $"Risk codes after: {afterRisks}\n" +
+                $"Trailing bytes before/after: {r.TrailingBytesBefore}/{r.TrailingBytesAfter}\n" +
+                $"Orientation: {r.SourceOrientation} → {r.CleanOrientation}; applied={r.OrientationApplied}\n" +
+                $"Dimensions: {r.SourceWidth}x{r.SourceHeight} → {r.CleanWidth}x{r.CleanHeight}\n" +
                 $"GPS removed: {r.GpsRemoved}\n" +
-                $"Original untouched: {r.OriginalUntouched}\n" +
-                $"SHA-256: {r.CleanSha256}";
-            _status.Text = "تم إنشاء النسخة النظيفة";
+                $"Source unchanged by hash: {r.OriginalUntouched}\n" +
+                $"Verification passed: {r.VerificationPassed}\n" +
+                $"Verification notes: {verificationNotes}\n" +
+                $"Source SHA-256: {r.OriginalSha256}\n" +
+                $"Clean SHA-256: {r.CleanSha256}";
+
+            if (!r.VerificationPassed)
+            {
+                _status.Text =
+                    "تم إنشاء نسخة، لكن فحص الخصوصية بعد التنظيف لم ينجح بالكامل؛ لم يتم فتح المشاركة.";
+                return;
+            }
+
+            _status.Text =
+                "تم إنشاء النسخة النظيفة والتحقق منها";
 
             await Share.Default.RequestAsync(new ShareFileRequest(
-                "Clean image",
+                "Verified clean image",
                 new ShareFile(r.OutputPath)));
         }
         catch (OperationCanceledException)

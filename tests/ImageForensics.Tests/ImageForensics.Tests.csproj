@@ -7,6 +7,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.152.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -16,5 +17,7 @@
     <ProjectReference Include="../../src/ImageForensics.Core/ImageForensics.Core.csproj" />
     <ProjectReference Include="../../src/ImageForensics.Forensics/ImageForensics.Forensics.csproj" />
     <ProjectReference Include="../../src/ImageForensics.Reporting/ImageForensics.Reporting.csproj" />
+    <ProjectReference Include="../../src/ImageForensics.Imaging/ImageForensics.Imaging.csproj" />
+    <ProjectReference Include="../../src/ImageForensics.Metadata/ImageForensics.Metadata.csproj" />
   </ItemGroup>
 </Project>

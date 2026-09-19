@@ -460,7 +460,7 @@ public sealed class ImageHeuristicsService : IImageHeuristicsService
         }
 
         var flat = quantizationTables.SelectMany(x => x).ToArray();
-        var mean = flat.Length == 0 ? null : flat.Average(v => (double)v);
+        double? mean = flat.Length == 0 ? null : flat.Average(v => (double)v);
         var quality = quantizationTables.Count == 0
             ? null
             : EstimateJpegQuality(quantizationTables[0]);

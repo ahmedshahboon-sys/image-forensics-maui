@@ -31,6 +31,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<IPrivacyRiskAnalyzer, PrivacyRiskAnalyzer>();
         builder.Services.AddSingleton<IMetadataCleaner, MetadataCleaner>();
         builder.Services.AddSingleton<IImageComparisonService, ImageComparisonService>();
+        builder.Services.AddSingleton<IPixelForensicsAnalyzer, PixelForensicsAnalyzer>();
+        builder.Services.AddSingleton<IImageDiagnosticGenerator, ImageDiagnosticGenerator>();
         builder.Services.AddSingleton<MainPage>();
 
 #if DEBUG

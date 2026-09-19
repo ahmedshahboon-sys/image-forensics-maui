@@ -457,6 +457,180 @@ public sealed class ImageVisualizationService : IImageVisualizationService
             output);
     }
 
+    private static void TransformComparisonOverlay(
+        string left,
+        string right,
+        string output,
+        CancellationToken ct)
+    {
+        using var a = LoadFixed(left, 768, 768);
+        using var b = LoadFixed(right, 768, 768);
+        using var dest = new SKBitmap(
+            768,
+            768,
+            SKColorType.Rgba8888,
+            SKAlphaType.Opaque);
+
+        for (var y = 0; y < 768; y++)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            for (var x = 0; x < 768; x++)
+            {
+                var p = a.GetPixel(x, y);
+                var q = b.GetPixel(x, y);
+
+                dest.SetPixel(
+                    x,
+                    y,
+                    new SKColor(
+                        (byte)((p.Red + q.Red) / 2),
+                        (byte)((p.Green + q.Green) / 2),
+                        (byte)((p.Blue + q.Blue) / 2)));
+            }
+        }
+
+        SavePng(dest, output);
+    }
+
+    private static void TransformComparisonHeatmap(
+        string left,
+        string right,
+        string output,
+        CancellationToken ct)
+    {
+        using var a = LoadFixed(left, 768, 768);
+        using var b = LoadFixed(right, 768, 768);
+        using var dest = new SKBitmap(
+            768,
+            768,
+            SKColorType.Rgba8888,
+            SKAlphaType.Opaque);
+
+        for (var y = 0; y < 768; y++)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            for (var x = 0; x < 768; x++)
+            {
+                var p = a.GetPixel(x, y);
+                var q = b.GetPixel(x, y);
+
+                var mean =
+                    (Math.Abs(p.Red - q.Red) +
+                     Math.Abs(p.Green - q.Green) +
+                     Math.Abs(p.Blue - q.Blue)) /
+                    3.0;
+
+                var intensity =
+                    (byte)Math.Clamp(
+                        (int)Math.Round(mean * 3.0),
+                        0,
+                        255);
+
+                var green =
+                    (byte)Math.Clamp(
+                        intensity * 2,
+                        0,
+                        255);
+
+                dest.SetPixel(
+                    x,
+                    y,
+                    new SKColor(
+                        intensity,
+                        green,
+                        0));
+            }
+        }
+
+        SavePng(dest, output);
+    }
+
+    private static void TransformComparisonContactSheet(
+        string left,
+        string right,
+        string output,
+        CancellationToken ct)
+    {
+        using var a = LoadPreview(left, 720);
+        using var b = LoadPreview(right, 720);
+
+        const int gap = 16;
+        const int panelWidth = 720;
+        const int panelHeight = 720;
+
+        using var dest = new SKBitmap(
+            panelWidth * 2 + gap,
+            panelHeight,
+            SKColorType.Rgba8888,
+            SKAlphaType.Opaque);
+
+        using var canvas = new SKCanvas(dest);
+        canvas.Clear(SKColors.Black);
+
+        DrawFitted(
+            canvas,
+            a,
+            new SKRect(
+                0,
+                0,
+                panelWidth,
+                panelHeight));
+
+        DrawFitted(
+            canvas,
+            b,
+            new SKRect(
+                panelWidth + gap,
+                0,
+                panelWidth * 2 + gap,
+                panelHeight));
+
+        ct.ThrowIfCancellationRequested();
+
+        SavePng(dest, output);
+    }
+
+    private static void DrawFitted(
+        SKCanvas canvas,
+        SKBitmap bitmap,
+        SKRect bounds)
+    {
+        var scale =
+            Math.Min(
+                bounds.Width / bitmap.Width,
+                bounds.Height / bitmap.Height);
+
+        var width =
+            bitmap.Width * scale;
+
+        var height =
+            bitmap.Height * scale;
+
+        var left =
+            bounds.Left +
+            (bounds.Width - width) / 2;
+
+        var top =
+            bounds.Top +
+            (bounds.Height - height) / 2;
+
+        canvas.DrawBitmap(
+            bitmap,
+            new SKRect(
+                0,
+                0,
+                bitmap.Width,
+                bitmap.Height),
+            new SKRect(
+                left,
+                top,
+                left + width,
+                top + height),
+            SKSamplingOptions.Default);
+    }
+
     private static SKBitmap LoadPreview(
         string path,
         int max)

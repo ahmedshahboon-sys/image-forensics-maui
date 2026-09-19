@@ -140,6 +140,36 @@ public sealed class PrivacyRiskAnalyzerTests
             r => r.Code == "privacy.timestamp");
     }
 
+    [Fact]
+    public void ZeroSizedJfifThumbnailFieldsAreNotReportedAsEmbeddedThumbnail()
+    {
+        var metadata =
+            new MetadataInspectionResult(
+                new[]
+                {
+                    Field(
+                        "JFIF",
+                        "Thumbnail Width",
+                        "0"),
+                    Field(
+                        "JFIF",
+                        "Thumbnail Height",
+                        "0")
+                },
+                null,
+                Array.Empty<string>());
+
+        var report =
+            new PrivacyRiskAnalyzer()
+                .Analyze(
+                    metadata,
+                    EmptyContainer());
+
+        Assert.DoesNotContain(
+            report.Risks,
+            r => r.Code == "privacy.thumbnail");
+    }
+
     private static MetadataField Field(
         string directory,
         string tag,

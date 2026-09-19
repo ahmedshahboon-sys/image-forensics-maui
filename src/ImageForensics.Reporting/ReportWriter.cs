@@ -60,7 +60,7 @@ public sealed class ReportWriter
 
     public string BatchToCsv(IEnumerable<BatchReportRow> rows)
     {
-        static string Q(string? s)=>"""+(s??"").Replace(""","""")+""";
+        static string Q(string? s) => "\\"" + (s ?? "").Replace("\\"", "\\"\\\"") + "\\"";
         var sb=new StringBuilder("FileName,SHA256,DetectedType,SizeBytes,Width,Height,HasGps,PrivacyRiskCount,IndicatorCount\n");
         foreach(var r in rows)
             sb.AppendLine(string.Join(",",Q(r.FileName),Q(r.Sha256),Q(r.DetectedType),r.SizeBytes,r.Width,r.Height,r.HasGps,r.PrivacyRiskCount,r.IndicatorCount));

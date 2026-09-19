@@ -180,12 +180,12 @@ public sealed class ReportWriter
         IEnumerable<BatchReportRow> rows)
     {
         static string Q(string? s)
-            => """ +
+            => "\"" +
                (s ?? string.Empty)
                    .Replace(
-                       """,
-                       """") +
-               """;
+                       "\"",
+                       "\"\"") +
+               "\"";
 
         var sb =
             new StringBuilder(

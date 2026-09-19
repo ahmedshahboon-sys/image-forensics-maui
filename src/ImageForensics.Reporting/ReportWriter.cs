@@ -73,7 +73,7 @@ public sealed class ReportWriter
         using var stream=File.Create(outputPath);
         using var document=SKDocument.CreatePdf(stream)??throw new InvalidOperationException("Unable to create PDF.");
         using var paint=new SKPaint { IsAntialias=true };
-        paint.TextSize=11;
+        using var font=new SKFont(SKTypeface.Default,11);
         var lines=ToText(report).Replace("\r","").Split('\n');
         const float pageW=595,pageH=842,margin=36,lineH=15;
         SKCanvas? canvas=null; float y=margin;

@@ -72,6 +72,7 @@ public sealed class MainPage : ContentPage
         var ela = ActionButton("إنشاء ELA مساعد");
         var red = ActionButton("عرض قناة R");
         var lsb = ActionButton("عرض Bit-plane LSB");
+        var entropyMap = ActionButton("خريطة Entropy");
         var search = ActionButton("بحث Metadata");
         var theme = ActionButton("تبديل Light / Dark");
         var cancel = new Button { Text = "إلغاء العملية", IsEnabled = false };
@@ -87,6 +88,7 @@ public sealed class MainPage : ContentPage
         ela.Clicked += async (_, _) => await CreateVisualizationAsync("ELA");
         red.Clicked += async (_, _) => await CreateVisualizationAsync("R");
         lsb.Clicked += async (_, _) => await CreateVisualizationAsync("LSB");
+        entropyMap.Clicked += async (_, _) => await CreateVisualizationAsync("ENTROPY");
         search.Clicked += (_, _) => SearchMetadata();
         cancel.Clicked += (_, _) => _cts?.Cancel();
         theme.Clicked += (_, _) =>
@@ -105,7 +107,7 @@ public sealed class MainPage : ContentPage
                 Children =
                 {
                     title, subtitle, _preview,
-                    quick, deep, compare, batch, clean, export, gps, copyGps, ela, red, lsb,
+                    quick, deep, compare, batch, clean, export, gps, copyGps, ela, red, lsb, entropyMap,
                     _metadataSearch, search,
                     cancel, theme,
                     _progress, _status, _result
@@ -464,6 +466,8 @@ public sealed class MainPage : ContentPage
                 await _visuals.CreateElaPreviewAsync(_lastSource, path);
             else if (kind == "LSB")
                 await _visuals.CreateBitPlaneAsync(_lastSource, 0, path);
+            else if (kind == "ENTROPY")
+                await _visuals.CreateEntropyMapAsync(_lastSource, path);
             else
                 await _visuals.CreateRgbChannelAsync(_lastSource, kind, path);
 

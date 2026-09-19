@@ -87,6 +87,7 @@ public sealed class HiddenDataInspector : IHiddenDataInspector
 
                 var baseOffset = fileOffset - carryCount;
                 ScanKnownSignatures(window, baseOffset, findings, seen);
+                ScanWebpSignatures(window, baseOffset, findings, seen);
 
                 ScanPrintableStrings(
                     buffer.AsSpan(0, read),
@@ -203,6 +204,59 @@ public sealed class HiddenDataInspector : IHiddenDataInspector
 
                 start = index + 1;
             }
+        }
+    }
+
+    private static void ScanWebpSignatures(
+        byte[] window,
+        long baseOffset,
+        List<HiddenDataFinding> findings,
+        HashSet<string> seen)
+    {
+        var riff = "RIFF"u8.ToArray();
+        var start = 0;
+
+        while (start <= window.Length - 12)
+        {
+            var index = IndexOf(
+                window,
+                riff,
+                start);
+
+            if (index < 0 ||
+                index + 12 > window.Length)
+                break;
+
+            if (window.AsSpan(
+                    index + 8,
+                    4)
+                .SequenceEqual("WEBP"u8))
+            {
+                var absolute =
+                    baseOffset + index;
+                var key =
+                    $"WebP image:{absolute}";
+
+                if (absolute >= 0 &&
+                    seen.Add(key) &&
+                    absolute != 0)
+                {
+                    findings.Add(
+                        new HiddenDataFinding(
+                            absolute,
+                            "WebP image",
+                            $"RIFF/WEBP signature found at offset {absolute}.",
+                            ForensicConfidence.Possible,
+                            "A valid-looking WebP header inside compressed data can still be coincidental. Detection is read-only and nothing is extracted or executed."));
+
+                    if (findings.Count >=
+                        MaximumFindings)
+                        return;
+                }
+            }
+
+            start =
+                index + 1;
         }
     }
 
@@ -336,32 +390,136 @@ public sealed class HiddenDataInspector : IHiddenDataInspector
         Stream stream,
         CancellationToken ct)
     {
-        var buffer = new byte[64 * 1024];
-        var previous = -1;
-        long offset = 0;
+        stream.Position = 2;
+        var lengthBytes = new byte[2];
 
-        while (true)
+        while (stream.Position < stream.Length)
         {
             ct.ThrowIfCancellationRequested();
 
-            var read = await stream.ReadAsync(
-                buffer.AsMemory(0, buffer.Length),
-                ct);
+            var prefix = stream.ReadByte();
+            if (prefix < 0)
+                return null;
 
-            if (read == 0)
-                break;
+            if (prefix != 0xFF)
+                continue;
 
-            for (var i = 0; i < read; i++)
+            int marker;
+            do
             {
-                var current = buffer[i];
+                marker = stream.ReadByte();
+            }
+            while (marker == 0xFF);
 
-                if (previous == 0xFF && current == 0xD9)
-                    return offset + i + 1;
+            if (marker < 0)
+                return null;
 
-                previous = current;
+            if (marker == 0x00)
+                continue;
+
+            if (marker == 0xD9)
+                return stream.Position;
+
+            if (marker is >= 0xD0 and <= 0xD7 ||
+                marker is 0x01 or 0xD8)
+                continue;
+
+            if (!await TryReadExactlyAsync(
+                    stream,
+                    lengthBytes,
+                    ct))
+                return null;
+
+            var length =
+                BinaryPrimitives.ReadUInt16BigEndian(
+                    lengthBytes);
+
+            if (length < 2 ||
+                stream.Position + length - 2 >
+                stream.Length)
+                return null;
+
+            var payloadLength =
+                length - 2;
+
+            if (marker != 0xDA)
+            {
+                stream.Position +=
+                    payloadLength;
+                continue;
             }
 
-            offset += read;
+            stream.Position +=
+                payloadLength;
+
+            var previous =
+                -1;
+
+            while (stream.Position <
+                   stream.Length)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                var current =
+                    stream.ReadByte();
+
+                if (current < 0)
+                    return null;
+
+                if (previous != 0xFF)
+                {
+                    previous = current;
+                    continue;
+                }
+
+                if (current == 0x00)
+                {
+                    previous = -1;
+                    continue;
+                }
+
+                if (current is >= 0xD0 and <= 0xD7)
+                {
+                    previous = -1;
+                    continue;
+                }
+
+                if (current == 0xD9)
+                    return stream.Position;
+
+                if (current == 0xFF)
+                {
+                    previous = 0xFF;
+                    continue;
+                }
+
+                if (current == 0xDA)
+                {
+                    if (!await TryReadExactlyAsync(
+                            stream,
+                            lengthBytes,
+                            ct))
+                        return null;
+
+                    var scanLength =
+                        BinaryPrimitives.ReadUInt16BigEndian(
+                            lengthBytes);
+
+                    if (scanLength < 2 ||
+                        stream.Position + scanLength - 2 >
+                        stream.Length)
+                        return null;
+
+                    stream.Position +=
+                        scanLength - 2;
+                    previous = -1;
+                    continue;
+                }
+
+                previous = -1;
+            }
+
+            return null;
         }
 
         return null;

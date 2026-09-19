@@ -247,6 +247,7 @@ public sealed class ImageVisualizationService : IImageVisualizationService
             SKAlphaType.Opaque);
 
         const int block = 16;
+        var histogram = new int[256];
 
         for (var by = 0;
              by < src.Height;
@@ -258,8 +259,10 @@ public sealed class ImageVisualizationService : IImageVisualizationService
                  bx < src.Width;
                  bx += block)
             {
-                Span<int> histogram =
-                    stackalloc int[256];
+                Array.Clear(
+                    histogram,
+                    0,
+                    histogram.Length);
 
                 var endX =
                     Math.Min(

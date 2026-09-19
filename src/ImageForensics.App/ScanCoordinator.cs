@@ -27,6 +27,17 @@ public sealed class ScanCoordinator
         _barcode=barcode;_rules=rules;_hidden=hidden;_privacy=privacy;_heuristics=heuristics;
     }
 
+    public async Task<ScanReport> QuickScanAsync(string path,string? mime=null,IProgress<AnalysisProgress>? progress=null,CancellationToken ct=default)
+    {
+        progress?.Report(new("identity",0.15,"File identity and hashes"));
+        var identity=await _identity.InspectAsync(path,mime,progress,ct);
+        progress?.Report(new("technical",0.70,"Image technical properties"));
+        var tech=await _technical.InspectAsync(path,ct);
+        progress?.Report(new("done",1.0,"Completed"));
+        return new ScanReport("0.9.0-beta",DateTimeOffset.UtcNow,identity,tech,null,null,null,
+            Array.Empty<BarcodeHit>(),Array.Empty<EvidenceItem>());
+    }
+
     public async Task<ScanReport> DeepScanAsync(string path,string? mime=null,IProgress<AnalysisProgress>? progress=null,CancellationToken ct=default)
     {
         progress?.Report(new("identity",0.05,"File identity and hashes"));

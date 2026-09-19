@@ -11,4 +11,18 @@ public sealed record ScanReport(
     ContainerInspectionResult? Container,
     PerceptualHashResult? PerceptualHashes,
     IReadOnlyList<BarcodeHit> Barcodes,
-    IReadOnlyList<EvidenceItem> Indicators);
+    IReadOnlyList<EvidenceItem> Indicators,
+    IReadOnlyList<HiddenDataFinding>? HiddenData = null,
+    PrivacyRiskReport? Privacy = null,
+    ImageHeuristicsResult? ImageHeuristics = null);
+
+public sealed record BatchReportRow(
+    string FileName,
+    string Sha256,
+    string DetectedType,
+    long SizeBytes,
+    int Width,
+    int Height,
+    bool HasGps,
+    int PrivacyRiskCount,
+    int IndicatorCount);

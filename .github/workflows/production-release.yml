@@ -1,0 +1,47 @@
+name: Production Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  signed-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet workload install maui-android
+      - name: Validate signing secrets
+        shell: bash
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KSP: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KA: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KAP: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "$KS" && test -n "$KSP" && test -n "$KA" && test -n "$KAP" || { echo "Android signing secrets are required"; exit 1; }
+          echo "$KS" | base64 -d > "$RUNNER_TEMP/release.keystore"
+      - name: Test
+        run: dotnet test tests/ImageForensics.Tests/ImageForensics.Tests.csproj -c Release
+      - name: Publish signed APK and AAB
+        env:
+          STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          dotnet publish src/ImageForensics.App/ImageForensics.App.csproj -c Release -f net10.0-android -p:AndroidPackageFormats="apk;aab" -p:AndroidKeyStore=true -p:AndroidSigningKeyStore="$RUNNER_TEMP/release.keystore" -p:AndroidSigningKeyAlias="$KEY_ALIAS" -p:AndroidSigningKeyPass="$KEY_PASS" -p:AndroidSigningStorePass="$STORE_PASS" -o artifacts/release
+          find artifacts/release -type f \( -name '*.apk' -o -name '*.aab' \) -exec sha256sum {} \; > artifacts/release/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: image-forensics-production-release
+          path: |
+            artifacts/release/*.apk
+            artifacts/release/*.aab
+            artifacts/release/SHA256SUMS.txt
+          if-no-files-found: error

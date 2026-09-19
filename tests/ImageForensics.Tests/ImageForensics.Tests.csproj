@@ -15,5 +15,6 @@
   <ItemGroup>
     <ProjectReference Include="../../src/ImageForensics.Core/ImageForensics.Core.csproj" />
     <ProjectReference Include="../../src/ImageForensics.Forensics/ImageForensics.Forensics.csproj" />
+    <ProjectReference Include="../../src/ImageForensics.Reporting/ImageForensics.Reporting.csproj" />
   </ItemGroup>
 </Project>

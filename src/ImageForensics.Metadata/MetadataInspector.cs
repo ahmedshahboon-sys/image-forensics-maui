@@ -64,11 +64,11 @@ public sealed class MetadataInspector : IMetadataInspector
         GpsInfo? gpsInfo = null;
         var gps = directories.OfType<GpsDirectory>().FirstOrDefault();
         var location = gps?.GetGeoLocation();
-        if (location is not null &&
-            !double.IsNaN(location.Latitude) && !double.IsInfinity(location.Latitude) &&
-            !double.IsNaN(location.Longitude) && !double.IsInfinity(location.Longitude))
+        if (location is { } value &&
+            !double.IsNaN(value.Latitude) && !double.IsInfinity(value.Latitude) &&
+            !double.IsNaN(value.Longitude) && !double.IsInfinity(value.Longitude))
         {
-            gpsInfo = new GpsInfo(location.Latitude, location.Longitude);
+            gpsInfo = new GpsInfo(value.Latitude, value.Longitude);
         }
 
         return new MetadataInspectionResult(fields, gpsInfo, errors);

@@ -12,6 +12,7 @@
     <SupportedOSPlatformVersion>23.0</SupportedOSPlatformVersion>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.20" />
     <ProjectReference Include="../ImageForensics.Core/ImageForensics.Core.csproj" />
     <ProjectReference Include="../ImageForensics.Forensics/ImageForensics.Forensics.csproj" />
     <ProjectReference Include="../ImageForensics.Metadata/ImageForensics.Metadata.csproj" />

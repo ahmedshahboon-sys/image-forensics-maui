@@ -38,6 +38,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<IContainerInspector, SafeContainerInspector>();
         builder.Services.AddSingleton<IPerceptualHashService, PerceptualHashService>();
         builder.Services.AddSingleton<IBarcodeInspector, BarcodeInspector>();
+        builder.Services.AddSingleton<IOcrInspector, OfflineOcrInspector>();
+        builder.Services.AddSingleton<IVisibleTextEntityExtractor, VisibleTextEntityExtractor>();
         builder.Services.AddSingleton<IConsistencyRuleEngine, ConsistencyRuleEngine>();
         builder.Services.AddSingleton<IHiddenDataInspector, HiddenDataInspector>();
         builder.Services.AddSingleton<IPrivacyRiskAnalyzer, PrivacyRiskAnalyzer>();

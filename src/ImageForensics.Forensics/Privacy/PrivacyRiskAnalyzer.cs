@@ -87,10 +87,7 @@ public sealed class PrivacyRiskAnalyzer : IPrivacyRiskAnalyzer
             risks,
             "privacy.thumbnail",
             "Embedded thumbnail/preview metadata",
-            f =>
-                f.Directory.Contains("Thumbnail", StringComparison.OrdinalIgnoreCase) ||
-                f.Tag.Contains("Thumbnail", StringComparison.OrdinalIgnoreCase) ||
-                f.Tag.Contains("Preview Image", StringComparison.OrdinalIgnoreCase));
+            IsThumbnailField);
 
         var xmpFields = metadata.Fields
             .Where(f =>
@@ -218,6 +215,89 @@ public sealed class PrivacyRiskAnalyzer : IPrivacyRiskAnalyzer
         => field.Tag.Equals(
             tag,
             StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsThumbnailField(
+        MetadataField field)
+    {
+        if (field.Directory.Contains(
+                "Thumbnail",
+                StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (field.Tag.Contains(
+                "Thumbnail Offset",
+                StringComparison.OrdinalIgnoreCase) ||
+            field.Tag.Contains(
+                "Thumbnail Length",
+                StringComparison.OrdinalIgnoreCase) ||
+            field.Tag.Contains(
+                "Thumbnail Data",
+                StringComparison.OrdinalIgnoreCase) ||
+            field.Tag.Contains(
+                "Preview Image",
+                StringComparison.OrdinalIgnoreCase))
+            return HasNonZeroOrNonEmptyValue(field);
+
+        if (field.Tag.Equals(
+                "Thumbnail Width",
+                StringComparison.OrdinalIgnoreCase) ||
+            field.Tag.Equals(
+                "Thumbnail Height",
+                StringComparison.OrdinalIgnoreCase))
+            return HasPositiveNumericValue(field);
+
+        return false;
+    }
+
+    private static bool HasNonZeroOrNonEmptyValue(
+        MetadataField field)
+    {
+        var value =
+            field.ParsedValue ??
+            field.RawValue;
+
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        var trimmed =
+            value.Trim();
+
+        return trimmed is not "0" and not "0 px" and not "0 pixels";
+    }
+
+    private static bool HasPositiveNumericValue(
+        MetadataField field)
+    {
+        var value =
+            field.ParsedValue ??
+            field.RawValue;
+
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        var digits =
+            new string(
+                value
+                    .TakeWhile(c =>
+                        !char.IsDigit(c))
+                    .Concat(
+                        value
+                            .SkipWhile(c =>
+                                !char.IsDigit(c))
+                            .TakeWhile(char.IsDigit))
+                    .ToArray());
+
+        var numeric =
+            new string(
+                digits
+                    .Where(char.IsDigit)
+                    .ToArray());
+
+        return int.TryParse(
+                   numeric,
+                   out var parsed) &&
+               parsed > 0;
+    }
 
     private static bool IsTimestampField(
         MetadataField field)

@@ -153,7 +153,7 @@ public sealed class ReportWriter
     public string BatchToCsv(IEnumerable<BatchReportRow> rows)
     {
         static string Q(string? s)
-            => """ + (s ?? string.Empty).Replace(""", """") + """;
+            => "\"" + (s ?? string.Empty).Replace("\"", "\"\"") + "\"";
 
         var sb = new StringBuilder(
             "FileName,SHA256,DetectedType,SizeBytes,Width,Height,HasGps,PrivacyRiskCount,IndicatorCount\n");

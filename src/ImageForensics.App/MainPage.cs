@@ -90,12 +90,12 @@ public sealed class MainPage : ContentPage
         }
         catch(OperationCanceledException){_status.Text="تم الإلغاء";}
         catch(Exception ex){ShowError(ex);}
-        finally{SetBusy(false,cancel); if(temp is not null)TryDelete(temp);}
+        finally{SetBusy(false,cancel); if(temp is not null && !string.Equals(temp,_lastSource,StringComparison.Ordinal))TryDelete(temp);}
     }
 
     private async Task RunDeepAsync(string path,string? mime,string? displayName)
     {
-        _lastSource=path;
+        if(_lastSource is not null && !string.Equals(_lastSource,path,StringComparison.Ordinal)) TryDelete(_lastSource);\n        _lastSource=path;
         var progress=new Progress<AnalysisProgress>(p=>{_status.Text=$"{p.Stage}: {p.Detail}";_progress.Progress=p.Percent;});
         _last=await _scanner.DeepScanAsync(path,mime,progress,_cts?.Token??CancellationToken.None);
         if(!string.IsNullOrWhiteSpace(displayName))

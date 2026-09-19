@@ -184,13 +184,80 @@ public sealed class ReportWriter
         return sb.ToString();
     }
 
-    public string BatchToCsv(IEnumerable<BatchReportRow> rows)
+    public string ComparisonToJson(
+        ImageForensics.Core.Models.ImageComparisonResult result)
+        => JsonSerializer.Serialize(
+            result,
+            JsonOptions);
+
+    public string ComparisonToText(
+        ImageForensics.Core.Models.ImageComparisonResult result)
+    {
+        var sb = new StringBuilder();
+
+        sb.AppendLine("IMAGE COMPARISON LAB");
+        sb.AppendLine($"Exact SHA-256 match: {result.ExactMatch}");
+        sb.AppendLine($"Left SHA-256: {result.LeftSha256}");
+        sb.AppendLine($"Right SHA-256: {result.RightSha256}");
+        sb.AppendLine($"Dimensions: {result.LeftWidth}x{result.LeftHeight} vs {result.RightWidth}x{result.RightHeight}");
+        sb.AppendLine($"Aspect ratios: {result.LeftAspectRatio:F6} vs {result.RightAspectRatio:F6}");
+        sb.AppendLine($"Scale X/Y: {result.ScaleX:F6} / {result.ScaleY:F6}");
+        sb.AppendLine($"Dimension relation: {result.DimensionRelation}");
+        sb.AppendLine($"Uniform resize candidate: {result.UniformResizeCandidate}");
+        sb.AppendLine($"Center-crop candidate: {result.CenterCropCandidate}");
+        sb.AppendLine($"aHash similarity: {result.AHashSimilarity:P2}");
+        sb.AppendLine($"dHash similarity: {result.DHashSimilarity:P2}");
+        sb.AppendLine($"pHash similarity: {result.PHashSimilarity:P2}");
+        sb.AppendLine($"Normalized RGB similarity: {result.PixelMetrics.NormalizedRgbSimilarity:P2}");
+        sb.AppendLine($"Center-crop similarity: {result.PixelMetrics.CenterCropSimilarity:P2}");
+        sb.AppendLine($"Pixel MAE: {result.PixelMetrics.MeanAbsoluteError:F4}");
+        sb.AppendLine($"Pixel RMSE: {result.PixelMetrics.RootMeanSquareError:F4}");
+        sb.AppendLine($"PSNR: {(result.PixelMetrics.PsnrDb?.ToString("F2") ?? "identical/infinite")} dB");
+        sb.AppendLine($"JPEG quality estimate: {result.LeftEstimatedJpegQuality?.ToString("F1") ?? "n/a"} vs {result.RightEstimatedJpegQuality?.ToString("F1") ?? "n/a"}");
+        sb.AppendLine($"Chroma subsampling: {result.LeftChromaSubsampling ?? "n/a"} vs {result.RightChromaSubsampling ?? "n/a"}");
+        sb.AppendLine($"Metadata differences: {result.MetadataDifferences.Count}");
+        sb.AppendLine($"ICC differences: {result.IccDifferences.Count}");
+
+        if (result.MetadataDifferences.Count > 0)
+        {
+            sb.AppendLine();
+            sb.AppendLine("METADATA DIFFERENCES");
+
+            foreach (var diff in result.MetadataDifferences.Take(250))
+                sb.AppendLine($"- [{diff.Directory}] {diff.Tag}: left={diff.LeftValue ?? "<missing>"} | right={diff.RightValue ?? "<missing>"}");
+        }
+
+        sb.AppendLine();
+        sb.AppendLine("COMPARISON INDICATORS");
+
+        foreach (var indicator in result.Indicators)
+        {
+            sb.AppendLine(
+                $"- [{indicator.Confidence}] {indicator.Title}: {indicator.Detail} | " +
+                $"Evidence: {indicator.Evidence} | Limitation: {indicator.Limitation}");
+        }
+
+        sb.AppendLine();
+        sb.AppendLine(
+            "LIMITATION: similarity, resize, crop and compression indicators are comparative heuristics. They do not prove authenticity, editing history, common source, or direction of derivation.");
+
+        return sb.ToString();
+    }
+
+    public string BatchToJson(
+        IEnumerable<BatchReportRow> rows)
+        => JsonSerializer.Serialize(
+            rows,
+            JsonOptions);
+
+    public string BatchToCsv(
+        IEnumerable<BatchReportRow> rows)
     {
         static string Q(string? s)
             => "\"" + (s ?? string.Empty).Replace("\"", "\"\"") + "\"";
 
         var sb = new StringBuilder(
-            "FileName,SHA256,DetectedType,SizeBytes,Width,Height,HasGps,PrivacyRiskCount,IndicatorCount\n");
+            "FileName,SHA256,DetectedType,SizeBytes,Width,Height,AspectRatio,HasGps,PrivacyRiskCount,IndicatorCount,BarcodeCount,OcrCharacterCount,AHash,DHash,PHash,DuplicateOf,NearDuplicateOf,Error\n");
 
         foreach (var r in rows)
         {
@@ -202,9 +269,18 @@ public sealed class ReportWriter
                 r.SizeBytes,
                 r.Width,
                 r.Height,
+                r.AspectRatio.ToString("F6", System.Globalization.CultureInfo.InvariantCulture),
                 r.HasGps,
                 r.PrivacyRiskCount,
-                r.IndicatorCount));
+                r.IndicatorCount,
+                r.BarcodeCount,
+                r.OcrCharacterCount,
+                Q(r.AHash),
+                Q(r.DHash),
+                Q(r.PHash),
+                Q(r.DuplicateOf),
+                Q(r.NearDuplicateOf),
+                Q(r.Error)));
         }
 
         return sb.ToString();

@@ -29,4 +29,22 @@ public interface IImageVisualizationService
         string rightPath,
         string outputPngPath,
         CancellationToken cancellationToken = default);
+
+    Task CreateComparisonOverlayAsync(
+        string leftPath,
+        string rightPath,
+        string outputPngPath,
+        CancellationToken cancellationToken = default);
+
+    Task CreateComparisonHeatmapAsync(
+        string leftPath,
+        string rightPath,
+        string outputPngPath,
+        CancellationToken cancellationToken = default);
+
+    Task CreateComparisonContactSheetAsync(
+        string leftPath,
+        string rightPath,
+        string outputPngPath,
+        CancellationToken cancellationToken = default);
 }

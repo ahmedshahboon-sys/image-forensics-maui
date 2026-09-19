@@ -26,6 +26,15 @@ public sealed record BatchReportRow(
     long SizeBytes,
     int Width,
     int Height,
+    double AspectRatio,
     bool HasGps,
     int PrivacyRiskCount,
-    int IndicatorCount);
+    int IndicatorCount,
+    int BarcodeCount,
+    int OcrCharacterCount,
+    string AHash,
+    string DHash,
+    string PHash,
+    string? DuplicateOf,
+    string? NearDuplicateOf,
+    string? Error);

@@ -27,6 +27,11 @@ public sealed class MainPage : ContentPage
     private readonly ProgressBar _progress = new() { Progress = 0 };
     private readonly Image _preview = new() { HeightRequest = 240, Aspect = Aspect.AspectFit };
     private readonly Entry _metadataSearch = new() { Placeholder = "بحث داخل Metadata..." };
+    private readonly Picker _batchFilter = new()
+    {
+        Title = "فلتر نتائج Batch"
+    };
+    private IReadOnlyList<BatchReportRow> _lastBatchRows = Array.Empty<BatchReportRow>();
     private readonly List<Button> _actions = new();
 
     private ScanReport? _last;
@@ -64,7 +69,19 @@ public sealed class MainPage : ContentPage
         var quick = ActionButton("فحص سريع");
         var deep = ActionButton("فحص عميق");
         var compare = ActionButton("مقارنة صورتين");
-        var batch = ActionButton("فحص مجموعة + CSV");
+        var batch = ActionButton("فحص مجموعة + CSV/JSON");
+        var applyBatchFilter = ActionButton("تطبيق فلتر Batch");
+
+        _batchFilter.ItemsSource = new[]
+        {
+            "الكل",
+            "GPS",
+            "مخاطر خصوصية",
+            "نسخ مطابقة",
+            "نسخ متشابهة",
+            "أخطاء"
+        };
+        _batchFilter.SelectedIndex = 0;
         var clean = ActionButton("إنشاء نسخة نظيفة");
         var export = ActionButton("تصدير ومشاركة JSON / TXT / PDF");
         var gps = ActionButton("فتح GPS في الخرائط");
@@ -82,6 +99,7 @@ public sealed class MainPage : ContentPage
         deep.Clicked += async (_, _) => await ScanPickedAsync(true, cancel);
         compare.Clicked += async (_, _) => await CompareAsync(cancel);
         batch.Clicked += async (_, _) => await BatchAsync(cancel);
+        applyBatchFilter.Clicked += (_, _) => ApplyBatchFilter();
         clean.Clicked += async (_, _) => await CleanAsync(cancel);
         export.Clicked += async (_, _) => await ExportAsync();
         gps.Clicked += async (_, _) => await OpenGpsAsync();
@@ -109,7 +127,7 @@ public sealed class MainPage : ContentPage
                 Children =
                 {
                     title, subtitle, _preview,
-                    quick, deep, compare, batch, clean, export, gps, copyGps, ela, red, lsb, entropyMap, copyOcr,
+                    quick, deep, compare, batch, _batchFilter, applyBatchFilter, clean, export, gps, copyGps, ela, red, lsb, entropyMap, copyOcr,
                     _metadataSearch, search,
                     cancel, theme,
                     _progress, _status, _result
@@ -219,46 +237,158 @@ public sealed class MainPage : ContentPage
 
     private async Task CompareAsync(Button cancel)
     {
-        var items = (await FilePicker.Default.PickMultipleAsync(
-            new PickOptions { PickerTitle = "اختر صورتين للمقارنة" })).Take(2).ToArray();
+        var picked =
+            await FilePicker.Default.PickMultipleAsync(
+                new PickOptions
+                {
+                    PickerTitle =
+                        "اختر صورتين للمقارنة"
+                });
+
+        var items =
+            picked?
+                .Take(2)
+                .ToArray() ??
+            Array.Empty<FileResult>();
+
         if (items.Length != 2)
         {
-            _status.Text = "اختر صورتين بالضبط";
+            _status.Text =
+                "اختر صورتين بالضبط";
             return;
         }
 
         string? a = null;
         string? b = null;
+
         try
         {
-            SetBusy(true, cancel);
-            a = await CopyToCacheAsync(items[0], _cts!.Token);
-            b = await CopyToCacheAsync(items[1], _cts.Token);
-            var r = await _comparison.CompareAsync(a, b, _cts.Token);
+            SetBusy(
+                true,
+                cancel);
 
-            var dir = Path.Combine(FileSystem.AppDataDirectory, "exports");
-            Directory.CreateDirectory(dir);
-            var diffPath = Path.Combine(dir, $"difference-{DateTimeOffset.UtcNow:yyyyMMddHHmmss}.png");
-            await _visuals.CreateDifferenceMapAsync(a, b, diffPath, _cts.Token);
+            a =
+                await CopyToCacheAsync(
+                    items[0],
+                    _cts!.Token);
+
+            b =
+                await CopyToCacheAsync(
+                    items[1],
+                    _cts.Token);
+
+            var result =
+                await _comparison.CompareAsync(
+                    a,
+                    b,
+                    _cts.Token);
+
+            var dir =
+                Path.Combine(
+                    FileSystem.AppDataDirectory,
+                    "exports");
+
+            Directory.CreateDirectory(
+                dir);
+
+            var stamp =
+                DateTimeOffset.UtcNow
+                    .ToString(
+                        "yyyyMMddHHmmss");
+
+            var diffPath =
+                Path.Combine(
+                    dir,
+                    $"compare-difference-{stamp}.png");
+
+            var heatPath =
+                Path.Combine(
+                    dir,
+                    $"compare-heatmap-{stamp}.png");
+
+            var overlayPath =
+                Path.Combine(
+                    dir,
+                    $"compare-overlay-{stamp}.png");
+
+            var contactPath =
+                Path.Combine(
+                    dir,
+                    $"compare-side-by-side-{stamp}.png");
+
+            var jsonPath =
+                Path.Combine(
+                    dir,
+                    $"compare-{stamp}.json");
+
+            var textPath =
+                Path.Combine(
+                    dir,
+                    $"compare-{stamp}.txt");
+
+            await _visuals.CreateDifferenceMapAsync(
+                a,
+                b,
+                diffPath,
+                _cts.Token);
+
+            await _visuals.CreateComparisonHeatmapAsync(
+                a,
+                b,
+                heatPath,
+                _cts.Token);
+
+            await _visuals.CreateComparisonOverlayAsync(
+                a,
+                b,
+                overlayPath,
+                _cts.Token);
+
+            await _visuals.CreateComparisonContactSheetAsync(
+                a,
+                b,
+                contactPath,
+                _cts.Token);
+
+            var comparisonText =
+                _writer.ComparisonToText(
+                    result);
+
+            await File.WriteAllTextAsync(
+                jsonPath,
+                _writer.ComparisonToJson(
+                    result),
+                _cts.Token);
+
+            await File.WriteAllTextAsync(
+                textPath,
+                comparisonText,
+                _cts.Token);
 
             _result.Text =
-                $"Exact SHA-256 match: {r.ExactMatch}\n" +
-                $"Dimensions: {r.LeftWidth}x{r.LeftHeight} vs {r.RightWidth}x{r.RightHeight}\n" +
-                $"aHash similarity: {r.AHashSimilarity:P2}\n" +
-                $"dHash similarity: {r.DHashSimilarity:P2}\n" +
-                $"pHash similarity: {r.PHashSimilarity:P2}\n" +
-                $"Metadata differences: {r.MetadataDifferences.Count}\n" +
-                $"Difference map: {diffPath}\n\n" +
-                "التشابه البصري مؤشر تقريبي وليس إثباتًا على مصدر أو تزوير.";
-            _status.Text = "اكتملت المقارنة";
+                comparisonText +
+                $"\nArtifacts:\n- {diffPath}\n- {heatPath}\n- {overlayPath}\n- {contactPath}\n- {jsonPath}\n- {textPath}";
 
-            await Share.Default.RequestAsync(new ShareFileRequest(
-                "Pixel difference map",
-                new ShareFile(diffPath)));
+            _status.Text =
+                "اكتملت مقارنة الصورتين";
+
+            await Share.Default.RequestAsync(
+                new ShareMultipleFilesRequest(
+                    "Image comparison lab",
+                    new List<ShareFile>
+                    {
+                        new(diffPath),
+                        new(heatPath),
+                        new(overlayPath),
+                        new(contactPath),
+                        new(jsonPath),
+                        new(textPath)
+                    }));
         }
         catch (OperationCanceledException)
         {
-            _status.Text = "تم الإلغاء";
+            _status.Text =
+                "تم الإلغاء";
         }
         catch (Exception ex)
         {
@@ -266,7 +396,10 @@ public sealed class MainPage : ContentPage
         }
         finally
         {
-            SetBusy(false, cancel);
+            SetBusy(
+                false,
+                cancel);
+
             TryDelete(a);
             TryDelete(b);
         }
@@ -274,41 +407,154 @@ public sealed class MainPage : ContentPage
 
     private async Task BatchAsync(Button cancel)
     {
-        var items = (await FilePicker.Default.PickMultipleAsync(
-            new PickOptions { PickerTitle = "اختر صور المجموعة" })).Take(50).ToArray();
-        if (items.Length == 0) return;
+        var picked =
+            await FilePicker.Default.PickMultipleAsync(
+                new PickOptions
+                {
+                    PickerTitle =
+                        "اختر صور المجموعة"
+                });
 
-        var rows = new List<BatchReportRow>();
+        var items =
+            picked?
+                .Take(50)
+                .ToArray() ??
+            Array.Empty<FileResult>();
+
+        if (items.Length == 0)
+            return;
+
+        var rows =
+            new List<BatchReportRow>();
+
+        var exactByHash =
+            new Dictionary<string, string>(
+                StringComparer.OrdinalIgnoreCase);
+
         try
         {
-            SetBusy(true, cancel);
-            for (var i = 0; i < items.Length; i++)
+            SetBusy(
+                true,
+                cancel);
+
+            for (var i = 0;
+                 i < items.Length;
+                 i++)
             {
                 _cts!.Token.ThrowIfCancellationRequested();
-                _status.Text = $"Batch {i + 1}/{items.Length}";
+
+                var item =
+                    items[i];
+
+                _status.Text =
+                    $"Batch {i + 1}/{items.Length}";
+
                 string? temp = null;
+
                 try
                 {
-                    temp = await CopyToCacheAsync(items[i], _cts.Token);
-                    var report = await _scanner.DeepScanAsync(temp, items[i].ContentType, null, _cts.Token);
-                    rows.Add(new BatchReportRow(
-                        items[i].FileName,
-                        report.Identity.Sha256,
-                        report.Identity.DetectedType,
-                        report.Identity.SizeBytes,
-                        report.Technical?.Width ?? 0,
-                        report.Technical?.Height ?? 0,
-                        report.Metadata?.Gps is not null,
-                        report.Privacy?.Risks.Count ?? 0,
-                        report.Indicators.Count));
+                    temp =
+                        await CopyToCacheAsync(
+                            item,
+                            _cts.Token);
+
+                    var report =
+                        await _scanner.DeepScanAsync(
+                            temp,
+                            item.ContentType,
+                            null,
+                            _cts.Token);
+
+                    string? duplicateOf = null;
+
+                    if (exactByHash.TryGetValue(
+                            report.Identity.Sha256,
+                            out var firstExact))
+                    {
+                        duplicateOf =
+                            firstExact;
+                    }
+                    else
+                    {
+                        exactByHash[
+                            report.Identity.Sha256] =
+                            item.FileName;
+                    }
+
+                    string? nearDuplicateOf = null;
+
+                    if (duplicateOf is null &&
+                        report.PerceptualHashes is not null)
+                    {
+                        var candidate =
+                            rows
+                                .Where(r =>
+                                    string.IsNullOrWhiteSpace(
+                                        r.Error) &&
+                                    !string.IsNullOrWhiteSpace(
+                                        r.PHash))
+                                .Select(r => new
+                                {
+                                    Row = r,
+                                    Similarity =
+                                        PerceptualHashResult.Similarity64(
+                                            r.PHash,
+                                            report.PerceptualHashes.PHash)
+                                })
+                                .Where(x =>
+                                    x.Similarity >= 0.95)
+                                .OrderByDescending(x =>
+                                    x.Similarity)
+                                .FirstOrDefault();
+
+                        nearDuplicateOf =
+                            candidate?.Row.FileName;
+                    }
+
+                    rows.Add(
+                        new BatchReportRow(
+                            item.FileName,
+                            report.Identity.Sha256,
+                            report.Identity.DetectedType,
+                            report.Identity.SizeBytes,
+                            report.Technical?.Width ?? 0,
+                            report.Technical?.Height ?? 0,
+                            report.Technical?.AspectRatio ?? 0,
+                            report.Metadata?.Gps is not null,
+                            report.Privacy?.Risks.Count ?? 0,
+                            report.Indicators.Count,
+                            report.Barcodes.Count,
+                            report.Ocr?.Text?.Length ?? 0,
+                            report.PerceptualHashes?.AHash ?? string.Empty,
+                            report.PerceptualHashes?.DHash ?? string.Empty,
+                            report.PerceptualHashes?.PHash ?? string.Empty,
+                            duplicateOf,
+                            nearDuplicateOf,
+                            null));
                 }
-                catch (Exception ex) when (ex is not OperationCanceledException)
+                catch (Exception ex)
+                    when (ex is not OperationCanceledException)
                 {
-                    rows.Add(new BatchReportRow(
-                        items[i].FileName,
-                        "ERROR",
-                        ex.GetType().Name,
-                        0, 0, 0, false, 0, 0));
+                    rows.Add(
+                        new BatchReportRow(
+                            item.FileName,
+                            string.Empty,
+                            "ERROR",
+                            0,
+                            0,
+                            0,
+                            0,
+                            false,
+                            0,
+                            0,
+                            0,
+                            0,
+                            string.Empty,
+                            string.Empty,
+                            string.Empty,
+                            null,
+                            null,
+                            $"{ex.GetType().Name}: {ex.Message}"));
                 }
                 finally
                 {
@@ -316,17 +562,60 @@ public sealed class MainPage : ContentPage
                 }
             }
 
-            var dir = Path.Combine(FileSystem.AppDataDirectory, "exports");
-            Directory.CreateDirectory(dir);
-            var path = Path.Combine(dir, $"batch-{DateTimeOffset.UtcNow:yyyyMMddHHmmss}.csv");
-            await File.WriteAllTextAsync(path, _writer.BatchToCsv(rows), _cts.Token);
-            _result.Text = $"تم فحص {rows.Count} ملف.\nCSV: {path}";
-            _status.Text = "اكتمل Batch";
-            await Share.Default.RequestAsync(new ShareFileRequest("Batch CSV", new ShareFile(path)));
+            _lastBatchRows =
+                rows.ToArray();
+
+            var dir =
+                Path.Combine(
+                    FileSystem.AppDataDirectory,
+                    "exports");
+
+            Directory.CreateDirectory(
+                dir);
+
+            var stamp =
+                DateTimeOffset.UtcNow
+                    .ToString(
+                        "yyyyMMddHHmmss");
+
+            var csvPath =
+                Path.Combine(
+                    dir,
+                    $"batch-{stamp}.csv");
+
+            var jsonPath =
+                Path.Combine(
+                    dir,
+                    $"batch-{stamp}.json");
+
+            await File.WriteAllTextAsync(
+                csvPath,
+                _writer.BatchToCsv(rows),
+                _cts.Token);
+
+            await File.WriteAllTextAsync(
+                jsonPath,
+                _writer.BatchToJson(rows),
+                _cts.Token);
+
+            ApplyBatchFilter();
+
+            _status.Text =
+                $"اكتمل Batch: {rows.Count} ملف";
+
+            await Share.Default.RequestAsync(
+                new ShareMultipleFilesRequest(
+                    "Batch CSV + JSON",
+                    new List<ShareFile>
+                    {
+                        new(csvPath),
+                        new(jsonPath)
+                    }));
         }
         catch (OperationCanceledException)
         {
-            _status.Text = "تم إلغاء Batch";
+            _status.Text =
+                "تم إلغاء Batch";
         }
         catch (Exception ex)
         {
@@ -334,8 +623,61 @@ public sealed class MainPage : ContentPage
         }
         finally
         {
-            SetBusy(false, cancel);
+            SetBusy(
+                false,
+                cancel);
         }
+    }
+
+    private void ApplyBatchFilter()
+    {
+        if (_lastBatchRows.Count == 0)
+        {
+            _status.Text =
+                "لا توجد نتائج Batch بعد";
+            return;
+        }
+
+        var selected =
+            _batchFilter.SelectedItem?
+                .ToString() ??
+            "الكل";
+
+        IEnumerable<BatchReportRow> filtered =
+            selected switch
+            {
+                "GPS" =>
+                    _lastBatchRows.Where(
+                        r => r.HasGps),
+                "مخاطر خصوصية" =>
+                    _lastBatchRows.Where(
+                        r => r.PrivacyRiskCount > 0),
+                "نسخ مطابقة" =>
+                    _lastBatchRows.Where(
+                        r => !string.IsNullOrWhiteSpace(
+                            r.DuplicateOf)),
+                "نسخ متشابهة" =>
+                    _lastBatchRows.Where(
+                        r => !string.IsNullOrWhiteSpace(
+                            r.NearDuplicateOf)),
+                "أخطاء" =>
+                    _lastBatchRows.Where(
+                        r => !string.IsNullOrWhiteSpace(
+                            r.Error)),
+                _ =>
+                    _lastBatchRows
+            };
+
+        var rows =
+            filtered.ToArray();
+
+        _result.Text =
+            $"Batch filter: {selected}\n" +
+            $"Matches: {rows.Length}/{_lastBatchRows.Count}\n\n" +
+            _writer.BatchToCsv(rows);
+
+        _status.Text =
+            $"فلتر Batch: {rows.Length} نتيجة";
     }
 
     private async Task CleanAsync(Button cancel)

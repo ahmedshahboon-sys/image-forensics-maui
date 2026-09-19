@@ -66,6 +66,45 @@ public sealed class ImageVisualizationService : IImageVisualizationService
                 ct),
             ct);
 
+    public Task CreateComparisonOverlayAsync(
+        string leftPath,
+        string rightPath,
+        string outputPngPath,
+        CancellationToken ct = default)
+        => Task.Run(
+            () => TransformComparisonOverlay(
+                leftPath,
+                rightPath,
+                outputPngPath,
+                ct),
+            ct);
+
+    public Task CreateComparisonHeatmapAsync(
+        string leftPath,
+        string rightPath,
+        string outputPngPath,
+        CancellationToken ct = default)
+        => Task.Run(
+            () => TransformComparisonHeatmap(
+                leftPath,
+                rightPath,
+                outputPngPath,
+                ct),
+            ct);
+
+    public Task CreateComparisonContactSheetAsync(
+        string leftPath,
+        string rightPath,
+        string outputPngPath,
+        CancellationToken ct = default)
+        => Task.Run(
+            () => TransformComparisonContactSheet(
+                leftPath,
+                rightPath,
+                outputPngPath,
+                ct),
+            ct);
+
     private static void TransformEla(
         string input,
         string output,

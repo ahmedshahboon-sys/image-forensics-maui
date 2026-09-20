@@ -318,6 +318,23 @@ public sealed class MainPage : ContentPage
         _last = report;
         _preview.Source = ImageSource.FromFile(path);
         _result.Text = _writer.ToText(report);
+        RenderSelectedSection();
+
+        if (!_privacyMode.IsToggled)
+        {
+            await _history.AddAsync(
+                new ScanHistoryEntry(
+                    report.ScannedAtUtc,
+                    report.Identity.FileName,
+                    report.Identity.DetectedType,
+                    report.Identity.SizeBytes,
+                    report.Identity.Sha256,
+                    deep,
+                    report.Indicators.Count,
+                    report.Privacy?.Risks.Count ?? 0),
+                ct);
+        }
+
         _status.Text = deep ? "اكتمل الفحص العميق" : "اكتمل الفحص السريع";
         _progress.Progress = 1;
     }
@@ -991,6 +1008,8 @@ public sealed class MainPage : ContentPage
                 await _visuals.CreateBitPlaneAsync(_lastSource, 0, path);
             else if (kind == "ENTROPY")
                 await _visuals.CreateEntropyMapAsync(_lastSource, path);
+            else if (kind == "HISTOGRAM")
+                await _visuals.CreateHistogramAsync(_lastSource, path);
             else
                 await _visuals.CreateRgbChannelAsync(_lastSource, kind, path);
 

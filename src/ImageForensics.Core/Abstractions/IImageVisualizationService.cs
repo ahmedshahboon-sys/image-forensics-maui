@@ -24,6 +24,11 @@ public interface IImageVisualizationService
         string outputPngPath,
         CancellationToken cancellationToken = default);
 
+    Task CreateHistogramAsync(
+        string inputPath,
+        string outputPngPath,
+        CancellationToken cancellationToken = default);
+
     Task CreateDifferenceMapAsync(
         string leftPath,
         string rightPath,

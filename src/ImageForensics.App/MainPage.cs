@@ -15,6 +15,7 @@ public sealed class MainPage : ContentPage
     private readonly IImageComparisonService _comparison;
     private readonly IImageVisualizationService _visuals;
     private readonly ReportWriter _writer;
+    private readonly IScanHistoryStore _history;
 
     private readonly Editor _result = new()
     {
@@ -25,6 +26,8 @@ public sealed class MainPage : ContentPage
     };
     private readonly Label _status = new() { Text = "جاهز" };
     private readonly ProgressBar _progress = new() { Progress = 0 };
+    private readonly Picker _resultSection = new() { Title = "قسم النتيجة" };
+    private readonly Switch _privacyMode = new();
     private readonly Image _preview = new() { HeightRequest = 240, Aspect = Aspect.AspectFit };
     private readonly Entry _metadataSearch = new() { Placeholder = "بحث داخل Metadata..." };
     private readonly Picker _batchFilter = new()
@@ -43,13 +46,15 @@ public sealed class MainPage : ContentPage
         IMetadataCleaner cleaner,
         IImageComparisonService comparison,
         IImageVisualizationService visuals,
-        ReportWriter writer)
+        ReportWriter writer,
+        IScanHistoryStore history)
     {
         _scanner = scanner;
         _cleaner = cleaner;
         _comparison = comparison;
         _visuals = visuals;
         _writer = writer;
+        _history = history;
 
         Title = "فاحص الصور";
         FlowDirection = FlowDirection.RightToLeft;

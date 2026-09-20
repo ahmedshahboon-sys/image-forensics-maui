@@ -13,12 +13,13 @@ public sealed class PerceptualHashService : IPerceptualHashService
         => Task.Run(() =>
         {
             cancellationToken.ThrowIfCancellationRequested();
-            using var codec = SKCodec.Create(filePath) ?? throw new InvalidDataException("Unsupported or corrupt image.");
-            var pixels = (long)codec.Info.Width * codec.Info.Height;
-            if (pixels <= 0 || pixels > MaxDecodedPixels)
-                throw new InvalidDataException($"Image exceeds perceptual-hash decode limit ({MaxDecodedPixels:N0} pixels).");
 
-            using var bitmap = SKBitmap.Decode(filePath) ?? throw new InvalidDataException("Image could not be decoded.");
+            using var bitmap =
+                BoundedImageDecoder.DecodePreview(
+                    filePath,
+                    512,
+                    MaxDecodedPixels,
+                    cancellationToken);
             var a = AverageHash(bitmap, cancellationToken);
             var d = DifferenceHash(bitmap, cancellationToken);
             var p = PerceptualHash(bitmap, cancellationToken);

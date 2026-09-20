@@ -20,6 +20,9 @@ public sealed class ScanCoordinator
     private readonly IOcrInspector _ocr;
     private readonly IVisibleTextEntityExtractor _visibleText;
     private readonly AnalysisLimits _limits;
+    private readonly object _cacheGate = new();
+    private CacheEntry? _quickCache;
+    private CacheEntry? _deepCache;
 
     public ScanCoordinator(
         IFileIdentityInspector identity,
@@ -59,6 +62,26 @@ public sealed class ScanCoordinator
         IProgress<AnalysisProgress>? progress = null,
         CancellationToken ct = default)
     {
+        var cacheKey =
+            CreateCacheKey(
+                path,
+                mime,
+                false);
+
+        if (TryGetCached(
+                cacheKey,
+                false,
+                out var cachedQuick))
+        {
+            progress?.Report(
+                new(
+                    "cache",
+                    1.0,
+                    "Reused in-memory quick-scan result"));
+
+            return cachedQuick;
+        }
+
         using var timeoutCts =
             CancellationTokenSource.CreateLinkedTokenSource(ct);
 
@@ -97,16 +120,24 @@ public sealed class ScanCoordinator
                 1.0,
                 "Completed"));
 
-        return new ScanReport(
-            "0.9.0-beta",
-            DateTimeOffset.UtcNow,
-            identity,
-            tech,
-            null,
-            null,
-            null,
-            Array.Empty<BarcodeHit>(),
-            Array.Empty<EvidenceItem>());
+        var report =
+            new ScanReport(
+                "0.9.0-beta",
+                DateTimeOffset.UtcNow,
+                identity,
+                tech,
+                null,
+                null,
+                null,
+                Array.Empty<BarcodeHit>(),
+                Array.Empty<EvidenceItem>());
+
+        SetCached(
+            cacheKey,
+            false,
+            report);
+
+        return report;
     }
 
     public async Task<ScanReport> DeepScanAsync(
@@ -115,6 +146,26 @@ public sealed class ScanCoordinator
         IProgress<AnalysisProgress>? progress = null,
         CancellationToken ct = default)
     {
+        var cacheKey =
+            CreateCacheKey(
+                path,
+                mime,
+                true);
+
+        if (TryGetCached(
+                cacheKey,
+                true,
+                out var cachedDeep))
+        {
+            progress?.Report(
+                new(
+                    "cache",
+                    1.0,
+                    "Reused in-memory deep-scan result"));
+
+            return cachedDeep;
+        }
+
         using var timeoutCts =
             CancellationTokenSource.CreateLinkedTokenSource(ct);
 
@@ -303,21 +354,101 @@ public sealed class ScanCoordinator
                 1.0,
                 "Completed"));
 
-        return new ScanReport(
-            "0.9.0-beta",
-            DateTimeOffset.UtcNow,
-            identity,
-            tech,
-            meta,
-            container,
-            hashes,
-            barcodes,
-            indicators,
-            hidden,
-            privacy,
-            heuristics,
-            steganography,
-            ocr,
-            visibleTextEntities);
+        var report =
+            new ScanReport(
+                "0.9.0-beta",
+                DateTimeOffset.UtcNow,
+                identity,
+                tech,
+                meta,
+                container,
+                hashes,
+                barcodes,
+                indicators,
+                hidden,
+                privacy,
+                heuristics,
+                steganography,
+                ocr,
+                visibleTextEntities);
+
+        SetCached(
+            cacheKey,
+            true,
+            report);
+
+        return report;
     }
+
+    private bool TryGetCached(
+        string key,
+        bool deep,
+        out ScanReport report)
+    {
+        lock (_cacheGate)
+        {
+            var entry =
+                deep
+                    ? _deepCache
+                    : _quickCache;
+
+            if (entry is not null &&
+                string.Equals(
+                    entry.Key,
+                    key,
+                    StringComparison.Ordinal))
+            {
+                report = entry.Report;
+                return true;
+            }
+        }
+
+        report = null!;
+        return false;
+    }
+
+    private void SetCached(
+        string key,
+        bool deep,
+        ScanReport report)
+    {
+        var entry =
+            new CacheEntry(
+                key,
+                report);
+
+        lock (_cacheGate)
+        {
+            if (deep)
+                _deepCache = entry;
+            else
+                _quickCache = entry;
+        }
+    }
+
+    private static string CreateCacheKey(
+        string path,
+        string? mime,
+        bool deep)
+    {
+        var info =
+            new FileInfo(path);
+
+        if (!info.Exists)
+            throw new FileNotFoundException(
+                "Scan source not found.",
+                path);
+
+        return string.Join(
+            "|",
+            deep ? "deep" : "quick",
+            info.FullName,
+            info.Length,
+            info.LastWriteTimeUtc.Ticks,
+            mime ?? string.Empty);
+    }
+
+    private sealed record CacheEntry(
+        string Key,
+        ScanReport Report);
 }

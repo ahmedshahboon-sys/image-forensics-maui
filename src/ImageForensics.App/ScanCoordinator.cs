@@ -19,6 +19,7 @@ public sealed class ScanCoordinator
     private readonly ISteganographyAnalyzer _steganography;
     private readonly IOcrInspector _ocr;
     private readonly IVisibleTextEntityExtractor _visibleText;
+    private readonly AnalysisLimits _limits;
 
     public ScanCoordinator(
         IFileIdentityInspector identity,
@@ -33,7 +34,8 @@ public sealed class ScanCoordinator
         IImageHeuristicsService heuristics,
         ISteganographyAnalyzer steganography,
         IOcrInspector ocr,
-        IVisibleTextEntityExtractor visibleText)
+        IVisibleTextEntityExtractor visibleText,
+        AnalysisLimits limits)
     {
         _identity = identity;
         _technical = technical;
@@ -48,6 +50,7 @@ public sealed class ScanCoordinator
         _steganography = steganography;
         _ocr = ocr;
         _visibleText = visibleText;
+        _limits = limits;
     }
 
     public async Task<ScanReport> QuickScanAsync(
@@ -56,6 +59,14 @@ public sealed class ScanCoordinator
         IProgress<AnalysisProgress>? progress = null,
         CancellationToken ct = default)
     {
+        using var timeoutCts =
+            CancellationTokenSource.CreateLinkedTokenSource(ct);
+
+        timeoutCts.CancelAfter(
+            _limits.DefaultTimeout);
+
+        ct = timeoutCts.Token;
+
         progress?.Report(
             new(
                 "identity",
@@ -104,6 +115,14 @@ public sealed class ScanCoordinator
         IProgress<AnalysisProgress>? progress = null,
         CancellationToken ct = default)
     {
+        using var timeoutCts =
+            CancellationTokenSource.CreateLinkedTokenSource(ct);
+
+        timeoutCts.CancelAfter(
+            _limits.DefaultTimeout);
+
+        ct = timeoutCts.Token;
+
         progress?.Report(
             new(
                 "identity",

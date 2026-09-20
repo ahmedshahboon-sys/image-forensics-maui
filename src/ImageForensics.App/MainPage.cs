@@ -71,6 +71,37 @@ public sealed class MainPage : ContentPage
             FontSize = 14
         };
 
+        _resultSection.ItemsSource = new[]
+        {
+            "Overview",
+            "Metadata",
+            "GPS",
+            "Structure",
+            "Forensics",
+            "OCR",
+            "Privacy",
+            "Raw"
+        };
+        _resultSection.SelectedIndex = 0;
+        _resultSection.SelectedIndexChanged += (_, _) => RenderSelectedSection();
+
+        _privacyMode.IsToggled =
+            Preferences.Default.Get(
+                "privacy-mode",
+                false);
+
+        _privacyMode.Toggled += (_, args) =>
+        {
+            Preferences.Default.Set(
+                "privacy-mode",
+                args.Value);
+
+            _status.Text =
+                args.Value
+                    ? "Privacy Mode مفعّل — لن يتم حفظ سجل الفحوصات الجديدة"
+                    : "Privacy Mode متوقف — يمكن حفظ سجل مختصر";
+        };
+
         var quick = ActionButton("فحص سريع");
         var deep = ActionButton("فحص عميق");
         var compare = ActionButton("مقارنة صورتين");
@@ -98,6 +129,11 @@ public sealed class MainPage : ContentPage
         var copyOcr = ActionButton("نسخ نص OCR");
         var search = ActionButton("بحث Metadata");
         var theme = ActionButton("تبديل Light / Dark");
+        var history = ActionButton("السجل المحلي");
+        var clearHistory = ActionButton("مسح السجل");
+        var histogram = ActionButton("Histogram RGB");
+        var copyMetadataField = ActionButton("نسخ أول حقل مطابق");
+        var explainMetadataField = ActionButton("شرح أول حقل مطابق");
         var cancel = new Button { Text = "إلغاء العملية", IsEnabled = false };
 
         quick.Clicked += async (_, _) => await ScanPickedAsync(false, cancel);
@@ -116,6 +152,11 @@ public sealed class MainPage : ContentPage
         copyOcr.Clicked += async (_, _) => await CopyOcrAsync();
         search.Clicked += (_, _) => SearchMetadata();
         cancel.Clicked += (_, _) => _cts?.Cancel();
+        history.Clicked += async (_, _) => await ShowHistoryAsync();
+        clearHistory.Clicked += async (_, _) => await ClearHistoryAsync();
+        histogram.Clicked += async (_, _) => await CreateVisualizationAsync("HISTOGRAM");
+        copyMetadataField.Clicked += async (_, _) => await CopyFirstMetadataMatchAsync();
+        explainMetadataField.Clicked += (_, _) => ExplainFirstMetadataMatch();
         theme.Clicked += (_, _) =>
         {
             if (Application.Current is null) return;
@@ -132,13 +173,54 @@ public sealed class MainPage : ContentPage
                 Children =
                 {
                     title, subtitle, _preview,
-                    quick, deep, compare, batch, _batchFilter, applyBatchFilter, clean, export, gps, copyGps, ela, red, lsb, entropyMap, copyOcr,
-                    _metadataSearch, search,
+                    quick, deep, compare, batch, _batchFilter, applyBatchFilter, clean,
+                    history, clearHistory,
+                    new HorizontalStackLayout
+                    {
+                        Spacing = 8,
+                        Children =
+                        {
+                            new Label
+                            {
+                                Text = "Privacy Mode",
+                                VerticalTextAlignment = TextAlignment.Center
+                            },
+                            _privacyMode
+                        }
+                    },
+                    export, gps, copyGps, ela, histogram, red, lsb, entropyMap, copyOcr,
+                    _metadataSearch, search, copyMetadataField, explainMetadataField,
                     cancel, theme,
-                    _progress, _status, _result
+                    _progress, _status, _resultSection, _result
                 }
             }
         };
+
+        var pinch =
+            new PinchGestureRecognizer();
+
+        pinch.PinchUpdated += (_, e) =>
+        {
+            if (e.Status == GestureStatus.Running)
+            {
+                _preview.Scale =
+                    Math.Clamp(
+                        _preview.Scale * e.Scale,
+                        1.0,
+                        5.0);
+            }
+            else if (e.Status == GestureStatus.Completed)
+            {
+                _preview.Scale =
+                    Math.Clamp(
+                        _preview.Scale,
+                        1.0,
+                        5.0);
+            }
+        };
+
+        _preview.GestureRecognizers.Add(
+            pinch);
     }
 
     protected override async void OnAppearing()

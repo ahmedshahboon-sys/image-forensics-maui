@@ -129,7 +129,7 @@ public sealed class MainPage : ContentPage
         var copyOcr = ActionButton("نسخ نص OCR");
         var search = ActionButton("بحث Metadata");
         var theme = ActionButton("تبديل Light / Dark");
-        var history = ActionButton("السجل المحلي");
+        var historyButton = ActionButton("السجل المحلي");
         var clearHistory = ActionButton("مسح السجل");
         var histogram = ActionButton("Histogram RGB");
         var copyMetadataField = ActionButton("نسخ أول حقل مطابق");
@@ -152,7 +152,7 @@ public sealed class MainPage : ContentPage
         copyOcr.Clicked += async (_, _) => await CopyOcrAsync();
         search.Clicked += (_, _) => SearchMetadata();
         cancel.Clicked += (_, _) => _cts?.Cancel();
-        history.Clicked += async (_, _) => await ShowHistoryAsync();
+        historyButton.Clicked += async (_, _) => await ShowHistoryAsync();
         clearHistory.Clicked += async (_, _) => await ClearHistoryAsync();
         histogram.Clicked += async (_, _) => await CreateVisualizationAsync("HISTOGRAM");
         copyMetadataField.Clicked += async (_, _) => await CopyFirstMetadataMatchAsync();
@@ -174,7 +174,7 @@ public sealed class MainPage : ContentPage
                 {
                     title, subtitle, _preview,
                     quick, deep, compare, batch, _batchFilter, applyBatchFilter, clean,
-                    history, clearHistory,
+                    historyButton, clearHistory,
                     new HorizontalStackLayout
                     {
                         Spacing = 8,

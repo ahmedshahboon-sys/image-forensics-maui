@@ -28,6 +28,7 @@ public sealed class MainPage : ContentPage
     private readonly ProgressBar _progress = new() { Progress = 0 };
     private readonly Picker _resultSection = new() { Title = "قسم النتيجة" };
     private readonly Switch _privacyMode = new();
+    private readonly Switch _onlineMode = new();
     private readonly Image _preview = new() { HeightRequest = 240, Aspect = Aspect.AspectFit };
     private readonly Entry _metadataSearch = new() { Placeholder = "بحث داخل Metadata..." };
     private readonly Picker _batchFilter = new()
@@ -102,6 +103,23 @@ public sealed class MainPage : ContentPage
                     : "Privacy Mode متوقف — يمكن حفظ سجل مختصر";
         };
 
+        _onlineMode.IsToggled =
+            Preferences.Default.Get(
+                "online-mode",
+                false);
+
+        _onlineMode.Toggled += (_, args) =>
+        {
+            Preferences.Default.Set(
+                "online-mode",
+                args.Value);
+
+            _status.Text =
+                args.Value
+                    ? "Online Mode مفعّل — أي خدمة خارجية ستحتاج موافقة إضافية"
+                    : "Online Mode متوقف";
+        };
+
         var quick = ActionButton("فحص سريع");
         var deep = ActionButton("فحص عميق");
         var compare = ActionButton("مقارنة صورتين");
@@ -134,6 +152,8 @@ public sealed class MainPage : ContentPage
         var histogram = ActionButton("Histogram RGB");
         var copyMetadataField = ActionButton("نسخ أول حقل مطابق");
         var explainMetadataField = ActionButton("شرح أول حقل مطابق");
+        var reverseSearch = ActionButton("Reverse Image Search — فتح خدمة خارجية");
+        var hashReputation = ActionButton("سمعة SHA-256 — فتح خدمة خارجية");
         var cancel = new Button { Text = "إلغاء العملية", IsEnabled = false };
 
         quick.Clicked += async (_, _) => await ScanPickedAsync(false, cancel);
@@ -157,6 +177,8 @@ public sealed class MainPage : ContentPage
         histogram.Clicked += async (_, _) => await CreateVisualizationAsync("HISTOGRAM");
         copyMetadataField.Clicked += async (_, _) => await CopyFirstMetadataMatchAsync();
         explainMetadataField.Clicked += (_, _) => ExplainFirstMetadataMatch();
+        reverseSearch.Clicked += async (_, _) => await OpenReverseSearchAsync();
+        hashReputation.Clicked += async (_, _) => await OpenHashReputationAsync();
         theme.Clicked += (_, _) =>
         {
             if (Application.Current is null) return;
@@ -188,6 +210,20 @@ public sealed class MainPage : ContentPage
                             _privacyMode
                         }
                     },
+                    new HorizontalStackLayout
+                    {
+                        Spacing = 8,
+                        Children =
+                        {
+                            new Label
+                            {
+                                Text = "Online Mode (Off افتراضيًا)",
+                                VerticalTextAlignment = TextAlignment.Center
+                            },
+                            _onlineMode
+                        }
+                    },
+                    reverseSearch, hashReputation,
                     export, gps, copyGps, ela, histogram, red, lsb, entropyMap, copyOcr,
                     _metadataSearch, search, copyMetadataField, explainMetadataField,
                     cancel, theme,
@@ -1022,6 +1058,62 @@ public sealed class MainPage : ContentPage
         {
             ShowError(ex);
         }
+    }
+
+    private async Task OpenReverseSearchAsync()
+    {
+        if (!_onlineMode.IsToggled)
+        {
+            _status.Text =
+                "فعّل Online Mode أولًا";
+            return;
+        }
+
+        var confirmed =
+            await DisplayAlert(
+                "خدمة خارجية",
+                OnlineFeaturePolicy.ReverseSearchDisclosure,
+                "فتح المتصفح",
+                "إلغاء");
+
+        if (!confirmed)
+            return;
+
+        await Launcher.Default.OpenAsync(
+            OnlineFeaturePolicy.ReverseSearchHome());
+    }
+
+    private async Task OpenHashReputationAsync()
+    {
+        if (!_onlineMode.IsToggled)
+        {
+            _status.Text =
+                "فعّل Online Mode أولًا";
+            return;
+        }
+
+        var hash =
+            _last?.Identity.Sha256;
+
+        if (string.IsNullOrWhiteSpace(hash))
+        {
+            _status.Text =
+                "نفّذ فحصًا أولًا للحصول على SHA-256";
+            return;
+        }
+
+        var confirmed =
+            await DisplayAlert(
+                "إرسال Hash إلى خدمة خارجية",
+                OnlineFeaturePolicy.HashReputationDisclosure,
+                "فتح المتصفح",
+                "إلغاء");
+
+        if (!confirmed)
+            return;
+
+        await Launcher.Default.OpenAsync(
+            OnlineFeaturePolicy.HashReputationSearch(hash));
     }
 
     private void RenderSelectedSection()

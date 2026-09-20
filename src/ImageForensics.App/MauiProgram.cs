@@ -10,6 +10,7 @@ using ImageForensics.Forensics.VisibleContent;
 using ImageForensics.Imaging;
 using ImageForensics.Metadata;
 using ImageForensics.Reporting;
+using ImageForensics.Storage;
 using Microsoft.Extensions.Logging;
 using TesseractOcrMaui;
 
@@ -49,6 +50,12 @@ public static class MauiProgram
         builder.Services.AddSingleton<IImageHeuristicsService, ImageHeuristicsService>();
         builder.Services.AddSingleton<ISteganographyAnalyzer, SteganographyAnalyzer>();
         builder.Services.AddSingleton<IImageVisualizationService, ImageVisualizationService>();
+        builder.Services.AddSingleton<IScanHistoryStore>(
+            _ => new ScanHistoryStore(
+                Path.Combine(
+                    FileSystem.AppDataDirectory,
+                    "history",
+                    "scan-history.json")));
         builder.Services.AddSingleton<ReportWriter>();
         builder.Services.AddSingleton<ScanCoordinator>();
         builder.Services.AddSingleton<MainPage>();

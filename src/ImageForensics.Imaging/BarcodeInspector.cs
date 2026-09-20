@@ -13,13 +13,25 @@ public sealed class BarcodeInspector : IBarcodeInspector
         => Task.Run<IReadOnlyList<BarcodeHit>>(() =>
         {
             cancellationToken.ThrowIfCancellationRequested();
-            using var codec = SKCodec.Create(filePath) ?? throw new InvalidDataException("Unsupported or corrupt image.");
-            var pixels = (long)codec.Info.Width * codec.Info.Height;
-            if (pixels <= 0 || pixels > MaxDecodedPixels)
-                return Array.Empty<BarcodeHit>();
 
-            using var bitmap = SKBitmap.Decode(filePath);
-            if (bitmap is null) return Array.Empty<BarcodeHit>();
+            SKBitmap bitmap;
+
+            try
+            {
+                bitmap =
+                    BoundedImageDecoder.DecodePreview(
+                        filePath,
+                        2048,
+                        MaxDecodedPixels,
+                        cancellationToken);
+            }
+            catch (InvalidDataException)
+            {
+                return Array.Empty<BarcodeHit>();
+            }
+
+            using (bitmap)
+            {
 
             var reader = new BarcodeReader
             {
@@ -35,5 +47,6 @@ public sealed class BarcodeInspector : IBarcodeInspector
             if (result is null) return Array.Empty<BarcodeHit>();
 
             return new[] { new BarcodeHit(result.BarcodeFormat.ToString(), result.Text ?? string.Empty) };
+            }
         }, cancellationToken);
 }

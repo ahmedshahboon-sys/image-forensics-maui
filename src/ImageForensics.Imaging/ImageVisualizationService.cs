@@ -53,6 +53,17 @@ public sealed class ImageVisualizationService : IImageVisualizationService
                 ct),
             ct);
 
+    public Task CreateHistogramAsync(
+        string inputPath,
+        string outputPngPath,
+        CancellationToken ct = default)
+        => Task.Run(
+            () => TransformHistogram(
+                inputPath,
+                outputPngPath,
+                ct),
+            ct);
+
     public Task CreateDifferenceMapAsync(
         string leftPath,
         string rightPath,
@@ -401,6 +412,112 @@ public sealed class ImageVisualizationService : IImageVisualizationService
         }
 
         return entropy;
+    }
+
+    private static void TransformHistogram(
+        string input,
+        string output,
+        CancellationToken ct)
+    {
+        using var src = LoadPreview(input, 1024);
+
+        var redValues = new int[256];
+        var greenValues = new int[256];
+        var blueValues = new int[256];
+
+        for (var y = 0; y < src.Height; y++)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            for (var x = 0; x < src.Width; x++)
+            {
+                var pixel = src.GetPixel(x, y);
+                redValues[pixel.Red]++;
+                greenValues[pixel.Green]++;
+                blueValues[pixel.Blue]++;
+            }
+        }
+
+        var max =
+            Math.Max(
+                1,
+                Math.Max(
+                    redValues.Max(),
+                    Math.Max(
+                        greenValues.Max(),
+                        blueValues.Max())));
+
+        const int width = 768;
+        const int height = 420;
+        const int margin = 28;
+
+        using var dest = new SKBitmap(
+            width,
+            height,
+            SKColorType.Rgba8888,
+            SKAlphaType.Opaque);
+
+        using var canvas = new SKCanvas(dest);
+        canvas.Clear(SKColors.Black);
+
+        using var redPaint = new SKPaint
+        {
+            Color = SKColors.Red,
+            IsAntialias = true,
+            StrokeWidth = 2
+        };
+        using var greenPaint = new SKPaint
+        {
+            Color = SKColors.Lime,
+            IsAntialias = true,
+            StrokeWidth = 2
+        };
+        using var bluePaint = new SKPaint
+        {
+            Color = SKColors.DodgerBlue,
+            IsAntialias = true,
+            StrokeWidth = 2
+        };
+
+        DrawHistogramLine(canvas, redValues, max, redPaint, width, height, margin);
+        DrawHistogramLine(canvas, greenValues, max, greenPaint, width, height, margin);
+        DrawHistogramLine(canvas, blueValues, max, bluePaint, width, height, margin);
+
+        SavePng(dest, output);
+    }
+
+    private static void DrawHistogramLine(
+        SKCanvas canvas,
+        IReadOnlyList<int> values,
+        int max,
+        SKPaint paint,
+        int width,
+        int height,
+        int margin)
+    {
+        using var path = new SKPath();
+
+        for (var i = 0; i < 256; i++)
+        {
+            var x =
+                margin +
+                i / 255f *
+                (width - margin * 2);
+
+            var y =
+                height -
+                margin -
+                values[i] /
+                (float)max *
+                (height - margin * 2);
+
+            if (i == 0)
+                path.MoveTo(x, y);
+            else
+                path.LineTo(x, y);
+        }
+
+        canvas.DrawPath(path, paint);
     }
 
     private static void TransformDifference(

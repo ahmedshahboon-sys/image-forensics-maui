@@ -16,6 +16,7 @@ public sealed class MainPage : ContentPage
     private readonly IImageVisualizationService _visuals;
     private readonly ReportWriter _writer;
     private readonly IScanHistoryStore _history;
+    private readonly AnalysisLimits _limits;
 
     private readonly Editor _result = new()
     {
@@ -48,7 +49,8 @@ public sealed class MainPage : ContentPage
         IImageComparisonService comparison,
         IImageVisualizationService visuals,
         ReportWriter writer,
-        IScanHistoryStore history)
+        IScanHistoryStore history,
+        AnalysisLimits limits)
     {
         _scanner = scanner;
         _cleaner = cleaner;
@@ -56,6 +58,7 @@ public sealed class MainPage : ContentPage
         _visuals = visuals;
         _writer = writer;
         _history = history;
+        _limits = limits;
 
         Title = "فاحص الصور";
         FlowDirection = FlowDirection.RightToLeft;
@@ -1348,7 +1351,7 @@ public sealed class MainPage : ContentPage
         _lastSource = path;
     }
 
-    private static async Task<string> CopyToCacheAsync(FileResult selected, CancellationToken ct)
+    private async Task<string> CopyToCacheAsync(FileResult selected, CancellationToken ct)
     {
         var folder = Path.Combine(FileSystem.CacheDirectory, "forensics");
         Directory.CreateDirectory(folder);
@@ -1363,7 +1366,7 @@ public sealed class MainPage : ContentPage
             await using var source = await selected.OpenReadAsync();
             await using var target = new FileStream(
                 path, FileMode.CreateNew, FileAccess.Write, FileShare.None, 128 * 1024, true);
-            await CopyWithLimitAsync(source, target, 512L * 1024 * 1024, ct);
+            await CopyWithLimitAsync(source, target, _limits.MaxFileBytes, ct);
             return path;
         }
         catch
@@ -1374,7 +1377,7 @@ public sealed class MainPage : ContentPage
     }
 
 #if ANDROID
-    private static async Task<string> CopyAndroidUriToCacheAsync(Android.Net.Uri uri, CancellationToken ct)
+    private async Task<string> CopyAndroidUriToCacheAsync(Android.Net.Uri uri, CancellationToken ct)
     {
         var folder = Path.Combine(FileSystem.CacheDirectory, "forensics");
         Directory.CreateDirectory(folder);

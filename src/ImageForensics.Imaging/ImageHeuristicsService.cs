@@ -29,16 +29,12 @@ public sealed class ImageHeuristicsService : IImageHeuristicsService
 
     private static ImageHeuristicsResult AnalyzeCore(string path, CancellationToken ct)
     {
-        using var codec = SKCodec.Create(path)
-            ?? throw new InvalidDataException("Unsupported or corrupt image.");
-
-        if ((long)codec.Info.Width * codec.Info.Height > MaxDecodedPixels)
-            throw new InvalidDataException(
-                "Deep pixel heuristics skipped: image exceeds safe decoded-pixel limit.");
-
-        using var original = SKBitmap.Decode(path)
-            ?? throw new InvalidDataException("Unable to decode image.");
-        using var preview = ResizeWithin(original, PreviewMaxSide);
+        using var preview =
+            BoundedImageDecoder.DecodePreview(
+                path,
+                PreviewMaxSide,
+                MaxDecodedPixels,
+                ct);
 
         var pixel = AnalyzePixels(preview, ct);
         var ela = AnalyzeEla(preview, ct);

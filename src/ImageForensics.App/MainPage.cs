@@ -1,6 +1,7 @@
 using System.Text;
 using ImageForensics.Core.Abstractions;
 using ImageForensics.Core.Models;
+using ImageForensics.Core.Utilities;
 using ImageForensics.Reporting;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.ApplicationModel.DataTransfer;
@@ -580,14 +581,11 @@ public sealed class MainPage : ContentPage
                 true,
                 cancel);
 
-            for (var i = 0;
-                 i < items.Length;
-                 i++)
+            foreach (var (item, i) in
+                     BatchSequence.Enumerate(
+                         items,
+                         _cts!.Token))
             {
-                _cts!.Token.ThrowIfCancellationRequested();
-
-                var item =
-                    items[i];
 
                 _status.Text =
                     $"Batch {i + 1}/{items.Length}";

@@ -131,6 +131,7 @@ internal static class TestCorpusFactory
         var jpeg = await File.ReadAllBytesAsync(plain);
         var thumbnail = await File.ReadAllBytesAsync(thumbnailPath);
         var app1 = BuildExifThumbnailApp1(thumbnail);
+        var output = Path.Combine(root, name);
 
         var combined = new byte[
             jpeg.Length +

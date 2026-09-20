@@ -80,14 +80,12 @@ jobs:
           profile: pixel_6
           disable-animations: true
           script: |
-            APK="$(find artifacts/android -type f -name '*-Signed.apk' | head -n 1)"
-            test -n "$APK" && test -f "$APK"
-            adb install -r "$APK"
+            test -f "$(find artifacts/android -type f -name '*-Signed.apk' | head -n 1)"
+            adb install -r "$(find artifacts/android -type f -name '*-Signed.apk' | head -n 1)"
             adb shell monkey -p com.shahboun.imageforensics -c android.intent.category.LAUNCHER 1
             sleep 5
-            PID="$(adb shell pidof com.shahboun.imageforensics | tr -d '\r')"
-            test -n "$PID"
-            echo "Android smoke test launched com.shahboun.imageforensics with PID=$PID"
+            test -n "$(adb shell pidof com.shahboun.imageforensics | tr -d '\r')"
+            adb shell pidof com.shahboun.imageforensics
 
       - name: SHA-256
         shell: bash

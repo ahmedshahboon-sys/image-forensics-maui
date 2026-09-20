@@ -25,24 +25,19 @@ public sealed class ImagePairPixelAnalyzer : IImagePairPixelAnalyzer
         string rightPath,
         CancellationToken ct)
     {
-        using var leftCodec =
-            SKCodec.Create(leftPath)
-            ?? throw new InvalidDataException("Unable to decode left image.");
-
-        using var rightCodec =
-            SKCodec.Create(rightPath)
-            ?? throw new InvalidDataException("Unable to decode right image.");
-
-        ValidatePixelCount(leftCodec.Info.Width, leftCodec.Info.Height);
-        ValidatePixelCount(rightCodec.Info.Width, rightCodec.Info.Height);
-
         using var left =
-            SKBitmap.Decode(leftPath)
-            ?? throw new InvalidDataException("Unable to decode left image.");
+            BoundedImageDecoder.DecodePreview(
+                leftPath,
+                1024,
+                MaxDecodedPixels,
+                ct);
 
         using var right =
-            SKBitmap.Decode(rightPath)
-            ?? throw new InvalidDataException("Unable to decode right image.");
+            BoundedImageDecoder.DecodePreview(
+                rightPath,
+                1024,
+                MaxDecodedPixels,
+                ct);
 
         using var leftFixed =
             ResizeFixed(

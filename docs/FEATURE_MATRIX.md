@@ -1,24 +1,83 @@
-# Feature matrix
+# Feature matrix — 1.0.0
 
-Implemented: file identity, signature/MIME mismatch, hashes, entropy, dimensions, orientation, alpha/frames, generic metadata, explicit GPS, JPEG/PNG structure, trailing data, perceptual hashes, QR/barcode, privacy risks, safe metadata cleaner, comparison, coarse difference map, ELA helper, RGB/bit-plane visualizations, block/noise/clone heuristics, hidden embedded-signature scan, JSON/TXT/PDF, batch CSV, Android share-in, Android share-out, GPS map intent, cancellation, safe size caps and CI APK.
+## Implemented
 
-Partially implemented / heuristic by design: JPEG quality estimate, chroma subsampling, block-boundary analysis, basic noise consistency, ELA, coarse copy-move candidates. These never produce a genuine/fake verdict.
+Identity/technical:
+- signature/MIME/extension mismatch;
+- entropy, SHA-256/SHA-1/MD5 comparison/CRC32;
+- dimensions/orientation/alpha/frames/bit depth/DPI/palette where available;
+- aHash/dHash/pHash.
 
-Deferred with explicit reason: Arabic offline OCR. A reliable redistributable Android Arabic OCR engine/model is not bundled yet; shipping a weak or cloud-uploading fallback would violate the offline-first/privacy requirements. RAW/HEIF decoding depth depends on platform codec/library support. Full scientific splice/resampling detection remains research-grade and is not represented as certainty.
+Metadata/container:
+- EXIF/GPS/IPTC/XMP/ICC/JFIF and available maker/container metadata;
+- explicit GPS display/copy/maps intent;
+- JPEG/PNG/WebP/GIF structure and trailing-data checks.
 
+Forensics:
+- timestamp/device/software consistency rules;
+- JPEG quantization, estimated quality, chroma;
+- block/grid/noise/histogram/edge/resampling indicators;
+- ELA helper;
+- copy-move coarse candidates;
+- RGB/bit planes/entropy map/LSB statistics;
+- embedded signatures/printable strings/high-entropy indicators.
 
-## Group 10 UI/UX
+Visible content:
+- offline Arabic/English OCR;
+- offline QR/barcode;
+- visible URL/email/phone extraction as text only.
 
-Implemented:
-- result sections: Overview / Metadata / GPS / Structure / Forensics / OCR / Privacy / Raw;
-- metadata search, copy-first-match and explain-first-match;
-- pinch zoom on image preview;
-- RGB histogram alongside existing RGB/bit-plane/ELA/entropy visualizations;
-- local privacy-safe scan history;
-- persisted Privacy Mode that blocks new history writes;
-- history clear action;
-- Light/Dark switching and Arabic RTL.
+Privacy:
+- privacy risk report;
+- verified clean-copy workflow that preserves the original;
+- local compact history + Privacy Mode;
+- privacy-safe log redaction.
 
-Deliberate limitations:
-- camera capture remains omitted because it is optional and would require expanding Android permissions;
-- embedded EXIF thumbnail bytes are not currently exposed by the safe metadata abstraction, so no fake thumbnail preview is generated.
+Comparison/batch:
+- exact/perceptual/pixel comparison;
+- metadata/ICC diff;
+- resize/crop/compression candidates;
+- difference/heatmap/overlay/contact sheet;
+- batch CSV/JSON with GPS/privacy/duplicate filters.
+
+Reporting/UI:
+- structured TXT/JSON/PDF;
+- Arabic PDF shaping;
+- report SHA-256 manifest;
+- RTL, Light/Dark, result sections;
+- metadata search/copy/explain;
+- zoom and RGB histogram.
+
+Online:
+- optional mode disabled by default;
+- explicit-consent external-browser workflow;
+- no secret background upload.
+
+Security/performance:
+- least-permission audit;
+- file/decoded-pixel caps and timeouts;
+- secure temp handling;
+- bounded preview decoding where evidence semantics permit;
+- session-only latest scan cache;
+- sequential cancellable batch.
+
+Release:
+- CI Release APK;
+- package signature/zipalign/integrity verification;
+- Android Emulator install/open smoke;
+- production workflow for persistent-key APK + AAB.
+
+## Heuristic by design
+
+ELA, JPEG quality, block/grid, noise, resampling, copy-move and steganography signals are investigative indicators only. They never produce an automatic genuine/fake verdict.
+
+## Deferred / limited
+
+- Camera capture: optional; omitted to preserve least permissions.
+- Face recognition/person identity: intentionally prohibited/not implemented.
+- Face detection/count/blur: not bundled in 1.0.0 because no additional validated local model was introduced.
+- Object/logo/license-plate detection: optional and deferred pending a validated local model.
+- EXIF embedded-thumbnail preview/comparison: metadata presence is detected, but thumbnail bytes are not exposed by the current safe abstraction.
+- RAW/HEIF deep support: dependent on platform/library codec support.
+- Windows build: architecture is prepared, but Android is the shipped target.
+- Physical-device QA: CI uses Android Emulator; a representative real-device pass remains recommended before broad rollout.

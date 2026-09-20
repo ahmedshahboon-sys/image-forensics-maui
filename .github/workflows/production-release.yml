@@ -32,8 +32,11 @@ jobs:
         run: |
           test -n "$KS" && test -n "$KSP" && test -n "$KA" && test -n "$KAP" || { echo "Android signing secrets are required"; exit 1; }
           echo "$KS" | base64 -d > "$RUNNER_TEMP/release.keystore"
-      - name: Test
-        run: dotnet test tests/ImageForensics.Tests/ImageForensics.Tests.csproj -c Release
+      - name: Restore and test
+        run: |
+          dotnet restore tests/ImageForensics.Tests/ImageForensics.Tests.csproj
+          dotnet test tests/ImageForensics.Tests/ImageForensics.Tests.csproj -c Release --no-restore
+          dotnet restore src/ImageForensics.App/ImageForensics.App.csproj
       - name: Publish signed APK and AAB
         env:
           STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -43,6 +46,19 @@ jobs:
         run: |
           dotnet publish src/ImageForensics.App/ImageForensics.App.csproj -c Release -f net10.0-android -p:AndroidPackageFormats="apk;aab" -p:AndroidKeyStore=true -p:AndroidSigningKeyStore="$RUNNER_TEMP/release.keystore" -p:AndroidSigningKeyAlias="$KEY_ALIAS" -p:AndroidSigningKeyPass="$KEY_PASS" -p:AndroidSigningStorePass="$STORE_PASS" -o artifacts/release
           find artifacts/release -type f \( -name '*.apk' -o -name '*.aab' \) -exec sha256sum {} \; > artifacts/release/SHA256SUMS.txt
+      - name: Verify production packages
+        shell: bash
+        run: |
+          APK="$(find artifacts/release -type f -name '*-Signed.apk' | head -n 1)"
+          AAB="$(find artifacts/release -type f -name '*.aab' | head -n 1)"
+          test -n "$APK" && test -f "$APK"
+          test -n "$AAB" && test -f "$AAB"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          ZIPALIGN="$(find "$ANDROID_HOME/build-tools" -type f -name zipalign | sort -V | tail -n 1)"
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
+          "$ZIPALIGN" -c -v 4 "$APK"
+          unzip -t "$APK"
+          jarsigner -verify -strict "$AAB"
       - uses: actions/upload-artifact@v4
         with:
           name: image-forensics-production-release

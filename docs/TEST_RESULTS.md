@@ -1,47 +1,44 @@
-# Test and validation status
+# Test and validation status — 1.0.0
 
-## Automated unit tests
+## Automated coverage
 
-The current CI suite covers:
-- magic-byte detection and extension mismatch;
-- hashing/file identity behavior;
-- corrupt/empty input handling;
-- JPEG/PNG container parsing;
-- trailing data;
-- privacy/forensic rules;
-- report CSV escaping;
-- supporting analysis primitives.
+The suite includes:
+- hashing/file identity and magic-byte mismatch;
+- JPEG markers / PNG chunks / trailing data;
+- EXIF Make/Model and explicit GPS parsing;
+- privacy rules and cleaner verification;
+- corrupt-image handling;
+- huge-image controlled rejection;
+- batch cancellation;
+- report TXT/JSON/PDF generation;
+- Arabic Unicode PDF generation;
+- comparison and pixel metrics;
+- QR decoding;
+- hidden-data and steganography primitives;
+- privacy-safe history/logging;
+- online-mode policy;
+- generated synthetic corpus;
+- performance regression budgets.
 
-The latest successful release-baseline CI before this documentation update completed **11 tests with 0 failures**.
+The generated corpus contains no real-person photos.
 
-## CI gates
+## Release-candidate CI gates
 
-A release-baseline run is considered successful only when all of these pass:
-- .NET 10 setup;
-- MAUI Android workload installation;
-- unit tests;
-- Android project restore;
-- signed APK build;
-- APK signature verification;
+A green candidate requires:
+- .NET/MAUI setup;
+- pinned OCR model verification;
+- pinned PDF font verification;
+- Android least-permission security audit;
+- automated tests;
+- Release APK build;
+- signing;
+- apksigner verification;
 - zipalign verification;
-- ZIP/APK integrity check;
+- ZIP/APK integrity;
+- Android Emulator install/open smoke;
 - SHA-256 generation;
 - artifact upload.
 
-## Device QA still required before public production release
+## Device QA boundary
 
-Cloud CI can validate the binary but does not replace real-device QA. Before a public store/release rollout, verify on representative Android devices:
-- install and cold launch;
-- File Picker;
-- share image into the app;
-- quick/deep scan of JPEG/PNG/WebP/HEIF where supported;
-- image without metadata;
-- image with explicit GPS;
-- corrupt image without crash;
-- large-image cancellation;
-- cleaner leaves the original untouched;
-- JSON/TXT/PDF export and Android Share Sheet;
-- map intent;
-- Light/Dark and RTL layouts.
-
-Record device model, Android version and result for each production candidate.
+Cloud CI and emulator QA do not replace representative physical-device testing. Native OCR visual accuracy, chooser/share-sheet behavior, maps apps, vendor HEIF codecs and device-specific memory behavior should be spot-checked before a broad public/store rollout.

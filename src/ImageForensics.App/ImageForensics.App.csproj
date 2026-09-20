@@ -7,8 +7,8 @@
     <SingleProject>true</SingleProject>
     <ApplicationTitle>Photo Inspector</ApplicationTitle>
     <ApplicationId>com.shahboun.imageforensics</ApplicationId>
-    <ApplicationDisplayVersion>0.9.0</ApplicationDisplayVersion>
-    <ApplicationVersion>9</ApplicationVersion>
+    <ApplicationDisplayVersion>1.0.0</ApplicationDisplayVersion>
+    <ApplicationVersion>100</ApplicationVersion>
     <SupportedOSPlatformVersion>23.0</SupportedOSPlatformVersion>
     <AndroidUseAapt2>true</AndroidUseAapt2>
   </PropertyGroup>

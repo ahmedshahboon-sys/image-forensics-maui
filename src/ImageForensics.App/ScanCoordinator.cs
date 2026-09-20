@@ -122,7 +122,7 @@ public sealed class ScanCoordinator
 
         var report =
             new ScanReport(
-                "0.9.0-beta",
+                AppReleaseInfo.Version,
                 DateTimeOffset.UtcNow,
                 identity,
                 tech,
@@ -356,7 +356,7 @@ public sealed class ScanCoordinator
 
         var report =
             new ScanReport(
-                "0.9.0-beta",
+                AppReleaseInfo.Version,
                 DateTimeOffset.UtcNow,
                 identity,
                 tech,

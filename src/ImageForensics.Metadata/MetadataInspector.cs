@@ -142,7 +142,7 @@ public sealed class MetadataInspector : IMetadataInspector
         var text = FindText(fields, tags);
         if (string.IsNullOrWhiteSpace(text)) return null;
 
-        var match = Regex.Match(text, @"[-+]?d+(?:[.,]d+)?");
+        var match = Regex.Match(text, @"[-+]?\d+(?:[.,]\d+)?");
         if (!match.Success) return null;
 
         var normalized = match.Value.Replace(',', '.');

@@ -9,3 +9,12 @@
 - Logs must not contain image bytes, OCR text, GPS coordinates, or full source paths by default.
 - Temporary files are isolated and must be deleted after use.
 - Online integrations, when added, are disabled by default and require explicit consent.
+
+
+## Optional online mode
+
+Online Mode defaults to off. Current online actions use the external browser only:
+- reverse-image-search home page: no image bytes are passed by the app;
+- hash reputation search: only SHA-256 is placed in the external URL after user confirmation.
+
+The base APK still declares no INTERNET permission and performs no background upload.

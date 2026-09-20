@@ -1024,6 +1024,178 @@ public sealed class MainPage : ContentPage
         }
     }
 
+    private void RenderSelectedSection()
+    {
+        if (_last is null)
+            return;
+
+        var section =
+            _resultSection.SelectedItem?.ToString() ??
+            "Overview";
+
+        var report = _last;
+        var sb = new StringBuilder();
+
+        switch (section)
+        {
+            case "Overview":
+                sb.AppendLine($"File: {report.Identity.FileName}");
+                sb.AppendLine($"Type: {report.Identity.DetectedType}");
+                sb.AppendLine($"Size: {report.Identity.SizeBytes} bytes");
+                sb.AppendLine($"SHA-256: {report.Identity.Sha256}");
+                if (report.Technical is not null)
+                    sb.AppendLine($"Dimensions: {report.Technical.Width}x{report.Technical.Height}");
+                sb.AppendLine($"Indicators: {report.Indicators.Count}");
+                break;
+
+            case "Metadata":
+                if (report.Metadata is not null)
+                {
+                    foreach (var field in report.Metadata.Fields.Take(500))
+                    {
+                        sb.AppendLine($"[{field.Directory}] {field.Tag}");
+                        sb.AppendLine($"  {field.ParsedValue ?? field.RawValue}");
+                        sb.AppendLine($"  Confidence={field.Confidence}; Meaning={field.Meaning}");
+                    }
+                }
+                break;
+
+            case "GPS":
+                if (report.Metadata?.Gps is { } gps)
+                    sb.AppendLine($"{gps.Latitude:F8}, {gps.Longitude:F8}");
+                else
+                    sb.AppendLine("لا توجد GPS صريحة قابلة للقراءة.");
+                break;
+
+            case "Structure":
+                if (report.Container is not null)
+                {
+                    sb.AppendLine($"Format={report.Container.Format}; trailing={report.Container.TrailingBytes}");
+                    foreach (var segment in report.Container.Segments.Take(500))
+                        sb.AppendLine($"offset={segment.Offset} size={segment.Length} {segment.Type} — {segment.Description}");
+                }
+                break;
+
+            case "Forensics":
+                foreach (var item in report.Indicators)
+                {
+                    sb.AppendLine($"[{item.Confidence}] {item.Title}");
+                    sb.AppendLine($"Evidence: {item.Evidence}");
+                    sb.AppendLine($"Limitation: {item.Limitation}");
+                }
+                break;
+
+            case "OCR":
+                sb.AppendLine(report.Ocr?.Text ?? "لا توجد نتيجة OCR.");
+                foreach (var hit in report.Barcodes)
+                    sb.AppendLine($"[{hit.Format}] {hit.Text}");
+                break;
+
+            case "Privacy":
+                if (report.Privacy?.Risks is { Count: > 0 } risks)
+                {
+                    foreach (var risk in risks)
+                        sb.AppendLine($"[{risk.Confidence}] {risk.Title}: {risk.Evidence}");
+                }
+                else
+                {
+                    sb.AppendLine("لم تُكتشف مخاطر خصوصية مهيأة.");
+                }
+                break;
+
+            default:
+                sb.Append(_writer.ToText(report));
+                break;
+        }
+
+        _result.Text = sb.ToString();
+    }
+
+    private MetadataField? FirstMetadataMatch()
+    {
+        if (_last?.Metadata is null)
+            return null;
+
+        var q = _metadataSearch.Text?.Trim();
+
+        if (string.IsNullOrWhiteSpace(q))
+            return _last.Metadata.Fields.FirstOrDefault();
+
+        return _last.Metadata.Fields.FirstOrDefault(
+            x =>
+                x.Directory.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                x.Tag.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                (x.ParsedValue?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (x.RawValue?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false));
+    }
+
+    private async Task CopyFirstMetadataMatchAsync()
+    {
+        var field = FirstMetadataMatch();
+
+        if (field is null)
+        {
+            _status.Text = "لا يوجد حقل Metadata مطابق";
+            return;
+        }
+
+        await Clipboard.Default.SetTextAsync(
+            $"{field.Directory} / {field.Tag}: {field.ParsedValue ?? field.RawValue}");
+
+        _status.Text = $"تم نسخ الحقل: {field.Tag}";
+    }
+
+    private void ExplainFirstMetadataMatch()
+    {
+        var field = FirstMetadataMatch();
+
+        if (field is null)
+        {
+            _status.Text = "لا يوجد حقل Metadata مطابق";
+            return;
+        }
+
+        _result.Text =
+            $"Field: [{field.Directory}] {field.Tag}\n" +
+            $"Value: {field.ParsedValue ?? field.RawValue}\n" +
+            $"Meaning: {field.Meaning}\n" +
+            $"Confidence: {field.Confidence}\n" +
+            $"Source: {field.Source}\n\n" +
+            "ملاحظة: وجود Metadata لا يثبت وحده مصدر الصورة أو أصالتها.";
+    }
+
+    private async Task ShowHistoryAsync()
+    {
+        var entries = await _history.GetRecentAsync(50);
+
+        if (entries.Count == 0)
+        {
+            _result.Text = "السجل فارغ.";
+            return;
+        }
+
+        var sb = new StringBuilder();
+        sb.AppendLine($"History: {entries.Count} entries");
+
+        foreach (var item in entries)
+        {
+            sb.AppendLine();
+            sb.AppendLine($"{item.ScannedAtUtc:O} — {item.FileName}");
+            sb.AppendLine($"Type={item.DetectedType}; Size={item.SizeBytes}; Deep={item.DeepScan}");
+            sb.AppendLine($"Indicators={item.IndicatorCount}; Privacy={item.PrivacyRiskCount}");
+            sb.AppendLine($"SHA-256={item.Sha256}");
+        }
+
+        _result.Text = sb.ToString();
+    }
+
+    private async Task ClearHistoryAsync()
+    {
+        await _history.ClearAsync();
+        _result.Text = "تم مسح السجل المحلي.";
+        _status.Text = "السجل فارغ";
+    }
+
     private void SearchMetadata()
     {
         if (_last?.Metadata is null)

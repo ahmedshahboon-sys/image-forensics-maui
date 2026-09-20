@@ -20,6 +20,8 @@ jobs:
         run: bash scripts/fetch-ocr-models.sh
       - name: Fetch pinned PDF report font
         run: bash scripts/fetch-report-font.sh
+      - name: Security audit
+        run: bash scripts/security-audit.sh
       - name: Validate signing secrets
         shell: bash
         env:
